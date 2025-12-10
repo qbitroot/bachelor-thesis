@@ -6,6 +6,6 @@ Protocol fuzzing is a technique used to test protocol implementations. It has be
 
 ## WebTransport state diagram
 
-See SVG version [here](https://raw.githubusercontent.com/qbitroot/bachelor-thesis/refs/heads/main/state-diagram.svg)
+(click to see full vector zoomable image)
 
 ![state diagram](https://raw.githubusercontent.com/qbitroot/bachelor-thesis/refs/heads/main/state-diagram.svg)
