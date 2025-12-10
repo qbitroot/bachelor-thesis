@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="sk">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <title>Fuzzing protokolu WebTransport</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/reset.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/reveal.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/theme/night.min.css">
+
+    <style>
+        .reveal h1, .reveal h2, .reveal h3, .reveal h4 { text-transform: none; }
+        .reveal section img { background: white; padding: 10px; border-radius: 5px; }
+        
+        .column-container { display: flex; justify-content: space-between; align-items: stretch; gap: 20px; }
+        .column { flex: 1; padding: 15px; border: 1px solid #444; border-radius: 8px; background: rgba(255,255,255,0.05); }
+        
+        .small-text { font-size: 0.6em; }
+        .medium-text { font-size: 0.8em; }
+        
+        /* Nové štýly pre horizontálny diagram */
+        .flow-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 40px;
+        }
+        .flow-box {
+            background-color: #2c3e50;
+            border: 2px solid #61dafb;
+            padding: 15px;
+            border-radius: 10px;
+            width: 30%;
+            font-size: 0.7em;
+            position: relative;
+        }
+        .flow-arrow {
+            font-size: 2em;
+            color: #61dafb;
+            font-weight: bold;
+        }
+
+        .highlight-box { background: rgba(97, 218, 251, 0.1); padding: 20px; border-radius: 8px; margin-top: 20px; border-left: 5px solid #61dafb; }
+    </style>
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+
+            <section>
+                <h2>WebTransport Protocol Fuzzing</h2>
+                <p class="medium-text">Bakalárska práca</p>
+                <hr>
+                <p><strong>Autor:</strong> Vladyslav Havriuk</p>
+                <p><strong>Školiteľ:</strong> doc. RNDr. Martin Stanek, PhD.</p>
+                <p style="font-size: 0.5em; margin-top: 50px; opacity: 0.7;">https://github.com/qbitroot/webtransport-fuzzer</p>
+            </section>
+
+            <section>
+                <h3>Čo je WebTransport?</h3>
+                <ul class="medium-text">
+                    <li class="fragment">Moderný protokol pre obojsmernú komunikáciu klient-server.</li>
+                    <li class="fragment">Postavený na <strong>HTTP/3</strong> a <strong>QUIC</strong>.</li>
+                    <li class="fragment">Kombinuje nízku latenciu (ako UDP) s bezpečnosťou a spoľahlivosťou (TLS 1.3, Congestion Control).</li>
+                    <li class="fragment"><strong>Cieľ práce:</strong> Testovanie bezpečnosti tohto protokolu.</li>
+                </ul>
+            </section>
+
+            <section>
+                <h3>Architektúra protokolov</h3>
+                <table style="font-size: 0.65em; border: 1px solid white;">
+                    <thead>
+                        <tr>
+                            <th>Protokol</th>
+                            <th>Rola</th>
+                            <th>Vrstva</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="fragment">
+                            <td style="color: #61dafb">QUIC</td>
+                            <td>Cesta (The Road)</td>
+                            <td>Transport (L4)</td>
+                        </tr>
+                        <tr class="fragment">
+                            <td style="color: #ff6b6b">HTTP/3</td>
+                            <td>Dopravné predpisy</td>
+                            <td>Application (L7)</td>
+                        </tr>
+                        <tr class="fragment">
+                            <td style="color: #a8ff60">WebTransport</td>
+                            <td>Náklad (Cargo)</td>
+                            <td>Application (L7+)</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p class="small-text fragment" style="margin-top: 20px;">
+                    WebTransport využíva HTTP/3 na "setup", ale potom posiela dáta priamo cez QUIC streamy.
+                </p>
+            </section>
+
+            <section>
+                <h3>Fáza 1: Nadviazanie spojenia</h3>
+                <p class="small-text">Pred fuzzingom musíme prejsť striktným bezpečnostným procesom.</p>
+
+                <div class="flow-container">
+                    <div class="flow-box fragment">
+                        <strong>1. Handshake</strong><br>
+                        <span style="opacity: 0.7">QUIC + TLS 1.3</span>
+                    </div>
+                    
+                    <div class="flow-arrow fragment">→</div>
+                    
+                    <div class="flow-box fragment">
+                        <strong>2. Settings</strong><br>
+                        <span style="opacity: 0.7">H3 Parameters<br>(Max Sessions)</span>
+                    </div>
+
+                    <div class="flow-arrow fragment">→</div>
+
+                    <div class="flow-box fragment">
+                        <strong>3. Connect</strong><br>
+                        <span style="opacity: 0.7">HTTP Method:<br>CONNECT</span>
+                    </div>
+                </div>
+                
+                <p class="small-text fragment" style="margin-top: 30px; color: #a8ff60;">
+                    Až po úspešnom kroku 3 sme v stave "OPEN" a môžeme fuzzovať.
+                </p>
+            </section>
+
+            <section>
+                <h3>Fáza 2: Fuzzing Loop</h3>
+                <p class="small-text">Sme v tuneli. Klame telom, že sme validný klient.</p>
+
+                <div style="display: flex; align-items: center; justify-content: center; margin-top: 30px;">
+                    <div style="flex: 1; text-align: right; padding-right: 20px;">
+                        <h5 style="color: #ff6b6b">BooFuzz</h5>
+                        <div class="small-text">Generuje invalidné<br>VarInts, Payloady...</div>
+                    </div>
+                    
+                    <div style="font-size: 2em; padding: 0 10px;">➔</div>
+
+                    <div style="flex: 2; border: 2px solid #a8ff60; padding: 15px; border-radius: 10px;">
+                        <strong>STATE: OPEN</strong>
+                        <ul class="small-text" style="text-align: left; margin-top: 10px;">
+                            <li>Inject: Malformed Capsules</li>
+                            <li>Inject: Invalid Stream IDs</li>
+                            <li>Inject: Overflowed Datagrams</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h3>Metodika: Blackbox Fuzzing</h3>
+                
+                <div class="highlight-box fragment">
+                    <h4>Prečo Blackbox?</h4>
+                    <p class="medium-text">
+                        Náš fuzzer <strong>nemá prístup k internému stavu</strong> ani zdrojovému kódu servera.
+                    </p>
+                </div>
+
+                <div class="column-container" style="margin-top: 30px;">
+                    <div class="column fragment">
+                        <strong>Language Agnostic</strong>
+                        <p class="small-text">
+                            Keďže komunikujeme výhradne cez sieťové rozhranie (network packets), nezáleží nám na tom, v akom jazyku je server napísaný.
+                        </p>
+                    </div>
+                    <div class="column fragment">
+                        <strong>Real-world scenár</strong>
+                        <p class="small-text">
+                            Simulujeme útok reálneho útočníka, ktorý tiež vidí iba verejný port, nie kód aplikácie.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h3>Ciele testovania (Targets)</h3>
+                <p class="small-text">Testujeme rôzne implementácie WebTransport Echo Serverov:</p>
+                
+                <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; margin-top: 20px;">
+                    <div class="fragment" style="background: #333; padding: 10px 20px; border-radius: 5px;">
+                        <span style="color: #ffe873;">Python</span> <span class="small-text">(aioquic)</span>
+                    </div>
+                    <div class="fragment" style="background: #333; padding: 10px 20px; border-radius: 5px;">
+                        <span style="color: #dea584;">Rust</span> <span class="small-text">(quinn / h3)</span>
+                    </div>
+                    <div class="fragment" style="background: #333; padding: 10px 20px; border-radius: 5px;">
+                        <span style="color: #7bc6e0;">Go</span> <span class="small-text">(quic-go)</span>
+                    </div>
+                    <div class="fragment" style="background: #333; padding: 10px 20px; border-radius: 5px;">
+                        <span style="color: #e34c26;">C++</span> <span class="small-text">(mvfst)</span>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h3>Implementácia</h3>
+                <p class="medium-text"><strong>Technológia:</strong> Python + BooFuzz + aioquic</p>
+                <ul>
+                    <li class="fragment"><strong>Shim Architektúra:</strong> Bridge medzi fuzzerom a šifrovaným spojením.</li>
+                    <li class="fragment"><strong>State Machine:</strong> BooFuzz kontroluje logickú postupnosť (Connect -> Open Stream -> Send Data).</li>
+                </ul>
+                <hr class="fragment">
+                <p class="fragment medium-text">
+                    <strong>Záver:</strong> Vytvárame univerzálny nástroj na overenie robustnosti WebTransport implementácií.
+                </p>
+            </section>
+
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/reveal.min.js"></script>
+    <script>
+        Reveal.initialize({
+            hash: true,
+            controls: true,
+            progress: true,
+            center: true,
+            transition: 'slide'
+        });
+    </script>
+</body>
+</html>
