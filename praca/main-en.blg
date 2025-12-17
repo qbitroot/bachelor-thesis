@@ -1,0 +1,49 @@
+This is BibTeX, Version 0.99d (TeX Live 2022/Debian)
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
+The top-level auxiliary file: main-en.aux
+The style file: plain.bst
+Database file #1: literatura.bib
+Warning--to sort, need author or key in text_od_UI
+Warning--empty publisher in Oetiker2000
+You've used 6 entries,
+            2118 wiz_defined-function locations,
+            526 strings with 5280 characters,
+and the built_in function-call counts, 1665 in all, are:
+= -- 154
+> -- 70
+< -- 1
++ -- 28
+- -- 22
+* -- 94
+:= -- 272
+add.period$ -- 19
+call.type$ -- 6
+change.case$ -- 27
+chr.to.int$ -- 0
+cite$ -- 8
+duplicate$ -- 68
+empty$ -- 152
+format.name$ -- 22
+if$ -- 362
+int.to.chr$ -- 0
+int.to.str$ -- 6
+missing$ -- 6
+newline$ -- 34
+num.names$ -- 10
+pop$ -- 48
+preamble$ -- 2
+purify$ -- 23
+quote$ -- 0
+skip$ -- 48
+stack$ -- 0
+substring$ -- 63
+swap$ -- 12
+text.length$ -- 1
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 20
+warning$ -- 2
+while$ -- 13
+width$ -- 7
+write$ -- 65
+(There were 2 warnings)

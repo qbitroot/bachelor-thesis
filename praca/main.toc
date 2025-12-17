@@ -1,0 +1,15 @@
+\babel@toc {slovak}{}\relax 
+\contentsline {paragraph}{Čestné vyhlásenie:}{iv}{section*.1}%
+\contentsline {paragraph}{Poďakovanie:}{iv}{section*.2}%
+\contentsline {chapter}{Úvod}{1}{chapter*.10}%
+\contentsline {chapter}{\numberline {1}Jadro a členenie práce}{3}{chapter.1}%
+\contentsline {section}{\numberline {1.1}Jadro práce podľa smernice}{3}{section.1.1}%
+\contentsline {section}{\numberline {1.2}Ďalšie členenie}{4}{section.1.2}%
+\contentsline {subsection}{\numberline {1.2.1}Ukážka podnadpisu}{4}{subsection.1.2.1}%
+\contentsline {chapter}{\numberline {2}LaTeX}{5}{chapter.2}%
+\contentsline {section}{\numberline {2.1}Obrázky, tabuľky, algoritmy a odkazy na ne}{5}{section.2.1}%
+\contentsline {section}{\numberline {2.2}Odkazovanie na vzorce a literatúru}{6}{section.2.2}%
+\contentsline {chapter}{Záver}{9}{chapter*.11}%
+\contentsline {chapter}{Literatúra}{11}{chapter*.11}%
+\contentsline {chapter}{Príloha A}{13}{chapter*.13}%
+\contentsline {chapter}{Príloha B}{15}{chapter*.14}%

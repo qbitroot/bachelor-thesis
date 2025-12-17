@@ -1,0 +1,44 @@
+\newcommand{\noopsort}[1]{} \newcommand{\printfirst}[2]{#1}
+  \newcommand{\singleletter}[1]{#1} \newcommand{\switchargs}[2]{#2#1}
+\begin{thebibliography}{1}
+
+\bibitem{text_od_UI}
+{UI} {I}nformačné systémy, 2024.
+\newblock In: ChatGPT. Verzia 4. Dostupné na: OpenAI,
+  \url{https://chat.openai.com/share/54b738af-6cd9-4a6e-90b6-1c3c81b10bcf}.
+  [zobrazené 2024-02-05]. Zadanie: "Definuj informačné systémy z pohľadu
+  informačnej vedy".
+
+\bibitem{kniha}
+X.~Autor1 and Y.~Autor2.
+\newblock {\em Názov knihy}.
+\newblock Vydavateľstvo, 1900.
+
+\bibitem{clanok_na_konferencii}
+X.~Autor1 and Y.~Autor2.
+\newblock Názov článku (väčšinou z konferencie).
+\newblock In {\em Názov zborníka (väčšinou názov konferencie spolu s
+  ročníkom)}, pages 1--100. Vydavateľstvo, 1900.
+
+\bibitem{clanok}
+X.~Autor1 and Y.~Autor2.
+\newblock Názov článku z časopisu.
+\newblock {\em Názov časopisu, ktorý článok uverejnil}, 4(3):1--100, 1900.
+
+\bibitem{Oetiker2000}
+Tobias Oetiker, Hubert Partl, Irene Hyna, and Elisabeth Schlegl.
+\newblock {\em Nie príliš stručný úvod do systému {LaTeX2e}}.
+\newblock 2002.
+\newblock Preklad Ján Buša ml. a st.
+
+\bibitem{smernica}
+{Univerzita Komenského v Bratislave}.
+\newblock Vnútorný predpis č. 32/2023, {S}mernica rektora {U}niverzity
+  {K}omenského v {B}ratislave o základných náležitostiach záverečných
+  prác, rigoróznych prác a habilitačných prác, kontrole ich originality,
+  uchovávaní a sprístupňovaní na {U}niverzite {K}omenského v
+  {B}ratislave, 2023.
+\newblock [Zobrazené 2025-10-18] Dostupné na
+  \url{https://uniba.sk/fileadmin/ruk/legislativa/2023/Vp_2023_32.pdf}.
+
+\end{thebibliography}

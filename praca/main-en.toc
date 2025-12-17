@@ -1,0 +1,8 @@
+\contentsline {paragraph}{Declaration:}{v}{section*.1}%
+\contentsline {paragraph}{Acknowledgments:}{v}{section*.2}%
+\contentsline {chapter}{Introduction}{1}{chapter*.10}%
+\contentsline {chapter}{\numberline {1}A Sample Text}{3}{chapter.1}%
+\contentsline {chapter}{Conclusion}{5}{chapter*.11}%
+\contentsline {chapter}{References}{7}{chapter*.11}%
+\contentsline {chapter}{Appendix A}{9}{chapter*.13}%
+\contentsline {chapter}{Appendix B}{11}{chapter*.14}%
