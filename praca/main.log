@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022/Debian) (preloaded format=pdflatex 2025.1.24)  7 JAN 2026 23:40
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022/Debian) (preloaded format=pdflatex 2025.1.24)  7 JAN 2026 23:59
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -438,45 +438,23 @@ LaTeX Font Info:    External font `cmex10' loaded for size
 
 [3] [4
 
-]
-<images/zadanie.pdf, id=91, 597.50731pt x 845.04613pt>
-File: images/zadanie.pdf Graphic file (type pdf)
-<use images/zadanie.pdf>
-Package pdftex.def Info: images/zadanie.pdf  used on input line 148.
-(pdftex.def)             Requested size: 597.50584pt x 845.04407pt.
-File: images/zadanie.pdf Graphic file (type pdf)
-<use images/zadanie.pdf>
-Package pdftex.def Info: images/zadanie.pdf  used on input line 148.
-(pdftex.def)             Requested size: 597.50584pt x 845.04407pt.
-<images/zadanie.pdf, id=94, page=1, 597.50731pt x 845.04613pt>
-File: images/zadanie.pdf Graphic file (type pdf)
-<use images/zadanie.pdf, page 1>
-Package pdftex.def Info: images/zadanie.pdf , page1 used on input line 148.
-(pdftex.def)             Requested size: 597.50584pt x 845.04407pt.
-File: images/zadanie.pdf Graphic file (type pdf)
-<use images/zadanie.pdf, page 1>
-Package pdftex.def Info: images/zadanie.pdf , page1 used on input line 148.
-(pdftex.def)             Requested size: 597.53319pt x 845.08275pt.
-File: images/zadanie.pdf Graphic file (type pdf)
-<use images/zadanie.pdf, page 1>
-Package pdftex.def Info: images/zadanie.pdf , page1 used on input line 148.
-(pdftex.def)             Requested size: 597.53319pt x 845.08275pt.
-File: images/zadanie.pdf Graphic file (type pdf)
-<use images/zadanie.pdf, page 1>
-Package pdftex.def Info: images/zadanie.pdf , page1 used on input line 148.
-(pdftex.def)             Requested size: 597.53319pt x 845.08275pt.
+] (./zadanie.tex
+Underfull \hbox (badness 10000) in paragraph at lines 17--17
+[]\T1/cmr/bx/n/12 Meno a priez-visko
+ []
 
+
+Underfull \hbox (badness 10000) in paragraph at lines 21--21
+[]\T1/cmr/bx/n/12 Jazyk zá-ve-re£-nej
+ []
+
+)
 pdfTeX warning (ext4): destination with the same identifier (name{page.iii}) ha
 s been already used, duplicate ignored
 <to be read again> 
                    \relax 
-l.148 \includepdf{images/zadanie.pdf}
-                                     
-File: images/zadanie.pdf Graphic file (type pdf)
-<use images/zadanie.pdf, page 1>
-Package pdftex.def Info: images/zadanie.pdf , page1 used on input line 148.
-(pdftex.def)             Requested size: 597.53319pt x 845.08275pt.
- [3 <./images/zadanie.pdf>]
+l.156 \newpage
+               [3]
 pdfTeX warning (ext4): destination with the same identifier (name{page.iv}) has
  been already used, duplicate ignored
 <to be read again> 
@@ -489,20 +467,20 @@ l.177 \newpage
  [7
 
 
-] [8
-
 ] (./main.lof)
 \tf@lof=\write5
 \openout5 = `main.lof'.
 
- [9] [10
+ [8
 
-]
-(./main.lot)
+] (./main.lot)
 \tf@lot=\write6
 \openout6 = `main.lot'.
 
- [11] [12
+
+[9
+
+] [10
 
 ] (./uvod.tex [1
 
@@ -514,28 +492,22 @@ Underfull \vbox (badness 3525) has occurred while \output is active []
  [3
 
 ])
-[4] (./metodologia.tex [5] [6
+[4] (./metodologia.tex [5]
+Kapitola 2.
+[6
 
 ]
-Kapitola 2.
-[7]
 LaTeX Font Info:    Trying to load font information for T1+cmtt on input line 4
 3.
  (/usr/share/texlive/texmf-dist/tex/latex/base/t1cmtt.fd
 File: t1cmtt.fd 2022/07/10 v2.5l Standard LaTeX font definitions
 ))
-Overfull \hbox (2.224pt too wide) in paragraph at lines 43--248
-[]\T1/cmr/m/n/12 Zdrojový kód ná²ho fuz-zeru je do-stupný na ad-rese []$\T1/cmt
+Overfull \hbox (1.57138pt too wide) in paragraph at lines 43--248
+[]\T1/cmr/m/n/12 Zdrojový kód ná²ho fuz-zera je do-stupný na ad-rese []$\T1/cmt
 t/m/n/12 https : / / github . com / qbitroot /
  []
 
-(./vysledky.tex
-Overfull \hbox (170.97331pt too wide) has occurred while \output is active
-\T1/cmr/m/n/12 8 \T1/cmr/m/sl/12 KAPITOLA 2.  PREH‰AD PROTOKOLU WEBTRANSPORT, M
-ETODOLÓGIA FUZZINGU A IMPLEMENTÁCIA
- []
-
-[8]
+(./vysledky.tex [7]
 Kapitola 3.
 
 Overfull \hbox (3.86656pt too wide) in paragraph at lines 8--9
@@ -552,12 +524,10 @@ Overfull \hbox (2.5118pt too wide) in paragraph at lines 12--13
 
 Underfull \vbox (badness 1584) has occurred while \output is active []
 
- [9
+ [8
 
 ])
-(./zaver.tex [10]) [11
-
-] [12
+(./zaver.tex [9]) [10
 
 ] (./main.bbl
 Underfull \hbox (badness 5862) in paragraph at lines 47--51
@@ -571,39 +541,38 @@ Underfull \hbox (badness 10000) in paragraph at lines 47--51
 ort / blob / main / samples / echo /
  []
 
-) (./appendixA.tex [13
+) (./appendixA.tex) [11
 
 
-] [14
 
-]) [15] (./main.aux)
+] (./main.aux)
 Package rerunfilecheck Info: File `main.out' has not changed.
-(rerunfilecheck)             Checksum: 95719E5D693330CADEB1D7E538418A40;2735.
+(rerunfilecheck)             Checksum: BDB143A8C3CA8BB05166B2A9E7341CE4;2469.
  ) 
 Here is how much of TeX's memory you used:
- 12911 strings out of 477219
- 202921 string characters out of 5815552
+ 12895 strings out of 477219
+ 202584 string characters out of 5815552
  1860330 words of memory out of 5000000
- 32849 multiletter control sequences out of 15000+600000
+ 32841 multiletter control sequences out of 15000+600000
  525380 words of font info for 56 fonts, out of 8000000 for 9000
  428 hyphenation exceptions out of 8191
- 75i,17n,76p,1287b,573s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 75i,9n,76p,1287b,519s stack positions out of 10000i,1000n,20000p,200000b,200000s
  </home/qbit/.texlive2022/texmf-var/fonts/pk/ljfour/jknappen/ec/ecti1200.600p
 k> </home/qbit/.texlive2022/texmf-var/fonts/pk/ljfour/jknappen/ec/ecbx1440.600p
 k> </home/qbit/.texlive2022/texmf-var/fonts/pk/ljfour/jknappen/ec/ectt1200.600p
 k> </home/qbit/.texlive2022/texmf-var/fonts/pk/ljfour/jknappen/ec/tcrm1200.600p
 k> </home/qbit/.texlive2022/texmf-var/fonts/pk/ljfour/jknappen/ec/ecsl1200.600p
 k> </home/qbit/.texlive2022/texmf-var/fonts/pk/ljfour/jknappen/ec/ecbx2488.600p
-k> </home/qbit/.texlive2022/texmf-var/fonts/pk/ljfour/jknappen/ec/ecbx1728.600p
 k> </home/qbit/.texlive2022/texmf-var/fonts/pk/ljfour/jknappen/ec/ecbx1200.600p
+k> </home/qbit/.texlive2022/texmf-var/fonts/pk/ljfour/jknappen/ec/ecbx1728.600p
 k> </home/qbit/.texlive2022/texmf-var/fonts/pk/ljfour/jknappen/ec/ecrm1200.600p
 k> </home/qbit/.texlive2022/texmf-var/fonts/pk/ljfour/jknappen/ec/eccc2074.600p
 k> </home/qbit/.texlive2022/texmf-var/fonts/pk/ljfour/jknappen/ec/eccc1440.600p
 k>
-Output written on main.pdf (29 pages, 647102 bytes).
+Output written on main.pdf (23 pages, 172037 bytes).
 PDF statistics:
- 817 PDF objects out of 1000 (max. 8388607)
- 336 compressed objects within 4 object streams
- 68 named destinations out of 1000 (max. 500000)
- 157 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 715 PDF objects out of 1000 (max. 8388607)
+ 279 compressed objects within 3 object streams
+ 59 named destinations out of 1000 (max. 500000)
+ 129 words of extra memory for PDF output out of 10000 (max. 10000000)
 
