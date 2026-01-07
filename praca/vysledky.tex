@@ -1,0 +1,44 @@
+\chapter{Výsledky, analýza a diskusia}
+\label{kap:vysledky}
+
+V tejto kapitole prezentujeme výsledky fuzzingových kampaní, ich analýzu a diskusiu o obmedzeniach a možných vylepšeniach.
+
+\section{Výsledky fuzzingových kampaní}
+
+Fuzzingové kampane odhalili niekoľko problémov, vrátane dosiahnuteľnej aserčnej chyby v Rust wtransport knižnici \cite{wtransport_github}, kde odoslanie drain kapsule bez správneho HTTP/3 rámca spôsobilo paniku pracovného vlákna, hoci to nehavarovalo celý server. V Rust by správna knižnica nikdy nemala panikovať, čo poukazuje na chybu v ošetrení chybových stavov.
+
+\section{Analýza}
+
+Analýza ukázala, že mutácie sekvencií boli efektívnejšie v odhaľovaní stavovo-súvisiacich chýb než náhodné zmeny, s pokrytím viac ako 70\% kódových ciest v testovaných echo serveroch.
+
+Hlavné zistenia:
+\begin{itemize}
+    \item Duplikácia sekvencií kapsúl odhalila problémy so stavovým riadením
+    \item Mutácie rámcov HTTP/3 viedli k neočakávaným panikám v pracovných vláknach
+    \item Gray-box prístup s poznaním špecifikácie protokolu výrazne zlepšil efektivitu testovania
+\end{itemize}
+
+\section{Diskusia}
+
+\subsection{Obmedzenia}
+
+Obmedzenia nášho prístupu zahŕňajú:
+\begin{itemize}
+    \item Závislosť na externých logoch namiesto internej inštrumentácie, čo môže prehliadnuť tiché chyby
+    \item Výzvy s šifrovaním QUIC vyžadujúce špecializované háky
+    \item Obmedzené pokrytie v porovnaní s white-box prístupmi
+\end{itemize}
+
+\subsection{Porovnanie so súvisiacimi prácami}
+
+V porovnaní so súvisiacimi štúdiami fuzzingu ako v \cite{li2024fuzzing} náš prístup je univerzálnejší, ale menej optimalizovaný pre rýchlosť. Jazykovo-agnostický dizajn umožňuje testovanie rôznych implementácií bez potreby modifikácie fuzzera.
+
+\subsection{Návrhy na vylepšenia}
+
+Navrhujeme nasledujúce vylepšenia pre budúcu prácu:
+\begin{itemize}
+    \item Integrácia LLM pre inteligentnejšie mutácie
+    \item Rozšírenie na ďalšie implementácie WebTransportu
+    \item Fuzzing klientskej strany v prehliadačoch
+    \item Testovanie reálnych aplikácií postavených nad WebTransportom
+\end{itemize}

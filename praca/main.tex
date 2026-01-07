@@ -42,14 +42,14 @@
 % --- Definicia zakladnych pojmov
 % --- Vyplnte podla vasho zadania, rok ma byt rok odovzdania
 % -------------------
-\def\mfrok{2026}
-\def\mfnazov{Názov vašej bakalárskej práce}
+\def\mfrok{2025}
+\def\mfnazov{Fuzzing protokolu WebTransport}
 \def\mftyp{Bakalárska práca}
-\def\mfautor{Meno Priezvisko, príp. tituly}
-\def\mfskolitel{tit. Meno Priezvisko, tit. }
+\def\mfautor{Vladyslav Havriuk}
+\def\mfskolitel{doc. RNDr. Martin Stanek, PhD.}
 
 %ak mate konzultanta, odkomentujte aj jeho meno na titulnom liste
-\def\mfkonzultant{tit. Meno Priezvisko, tit. }  
+%\def\mfkonzultant{tit. Meno Priezvisko, tit. }  
 
 \def\mfmiesto{Bratislava, \mfrok}
 
@@ -157,21 +157,17 @@ Fakulta matematiky, fyziky a informatiky
 \pagestyle{plain}
 \paragraph{Čestné vyhlásenie:}
 Čestne vyhlasujem, že celú bakalársku prácu na tému \uv{\mfnazov},
-vrátane všetkých jej príloh a obrázkov, som vypracoval/vypracovala
+vrátane všetkých jej príloh a obrázkov, som vypracoval
 samostatne, a to s použitím literatúry uvedenej v priloženom zozname.
 
-% Uveďte na čo ste nástroje používali
-% Podľa typu použitia potom nástroje aj citujte v texte
 Pri príprave tejto práce boli tiež použité nástroje umelej
-inteligencie [ZOZNAM NÁSTROJOV] za účelom [DÔVOD]. Nástroje umelej
-inteligencie som použil/použila v súlade s príslušnými právnymi
+inteligencie za účelom asistovaného písania a úpravy textu. Nástroje umelej
+inteligencie som použil v súlade s príslušnými právnymi
 predpismi, akademickými právami a slobodami, etickými a morálnymi
 zásadami za súčasného dodržania akademickej integrity. Som si
-vedomý/vedomá, že plne zodpovedám za správnosť výsledného textu.
+vedomý, že plne zodpovedám za správnosť výsledného textu.
 
-\paragraph{Poďakovanie:} Tu môžete poďakovať školiteľovi, prípadne
-ďalším osobám, ktoré vám s prácou nejako pomohli, poradili,
-poskytli dáta a podobne.
+\paragraph{Poďakovanie:} Ďakujem svojmu školiteľovi doc. RNDr. Martinovi Stankovi, PhD. za odborné vedenie, cenné rady a pripomienky pri vypracovaní tejto práce.
 
 % --- Koniec poďakovania
 
@@ -181,13 +177,11 @@ poskytli dáta a podobne.
 \newpage 
 \section*{Abstrakt}
 
+Fuzzing protokolov je technika používaná na testovanie implementácií protokolov. Bola úspešne použitá na identifikáciu implementačných chýb a bezpečnostných zraniteľností v rôznych protokoloch. Cieľom tejto práce je preskúmať metódy fuzzingu protokolov a aplikovať ich na reálne implementácie protokolu WebTransport. Výsledky sú analyzované a diskutované.
 
-Slovenský abstrakt v rozsahu 100-500 slov, jeden odstavec. Abstrakt
-stručne sumarizuje výsledky práce. Mal by byť pochopiteľný pre bežného
-informatika. Nemal by teda využívať skratky, termíny alebo označenie
-zavedené v práci, okrem tých, ktoré sú všeobecne známe.
+Táto práca sa zaoberá fuzzingom protokolov na identifikáciu chýb v implementáciách a zraniteľností. Predstavujeme vyvinutý fuzzer založený na BooFuzz pre protokol WebTransport, ktorý zahŕňa mutácie štruktúry správ a duplikáciu sekvencií. Príspevok spočíva v integrácii s aioquic pre QUIC podporu, testovaní na echo serveroch a analýze výsledkov, vrátane objavenia chyby v Rust knižnici. Výsledky ukazujú efektivitu prístupu v odhaľovaní paník v pracovných vláknach, prispievajúc k spoľahlivosti WebTransportu.
 
-\paragraph*{Kľúčové slová:} jedno, druhé, tretie (prípadne štvrté, piate)
+\paragraph*{Kľúčové slová:} fuzzing, WebTransport, QUIC, HTTP/3, testovanie protokolov, bezpečnosť
 % --- Koniec Abstrakt - Slovensky
 
 
@@ -197,11 +191,11 @@ zavedené v práci, okrem tých, ktoré sú všeobecne známe.
 \newpage 
 \section*{Abstract}
 
-Abstract in the English language (translation of the abstract in the
-Slovak language).
+Protocol fuzzing is a technique used to test protocol implementations. It has been successfully employed to identify implementation errors and security vulnerabilities in various protocols. The goal of this thesis is to explore methods of protocol fuzzing and apply them to real-world implementations of the WebTransport protocol. The results are analyzed and discussed.
 
+This thesis addresses protocol fuzzing for identifying bugs in implementations and vulnerabilities. We present a developed fuzzer based on BooFuzz for the WebTransport protocol, which includes message structure mutations and sequence duplication. The contribution lies in the integration with aioquic for QUIC support, testing on echo servers, and analysis of results, including the discovery of a bug in a Rust library. The results demonstrate the effectiveness of the approach in detecting worker thread panics, contributing to the reliability of WebTransport.
 
-\paragraph*{Keywords:} 
+\paragraph*{Keywords:} fuzzing, WebTransport, QUIC, HTTP/3, protocol testing, security
 
 % --- Koniec Abstrakt - Anglicky
 
@@ -248,9 +242,11 @@ Slovak language).
 
 \input uvod.tex 
 
-\input kapitola.tex
+\input suvisiace_prace.tex
 
-\input latex.tex
+\input metodologia.tex
+
+\input vysledky.tex
 
 \input zaver.tex
 
@@ -269,21 +265,6 @@ Slovak language).
 \bibliographystyle{plain}
 \bibliography{literatura} 
 
-%Prípadne môžete napísať literatúru priamo tu
-%\begin{thebibliography}{5}
- 
-%\bibitem{br1} MOLINA H. G. - ULLMAN J. D. - WIDOM J., 2002, Database Systems, Upper Saddle River : Prentice-Hall, 2002, 1119 s., Pearson International edition, 0-13-098043-9
-
-%\bibitem{br2} MOLINA H. G. - ULLMAN J. D. - WIDOM J., 2000 , Databasse System implementation, New Jersey : Prentice-Hall, 2000, 653s., ???
-
-%\bibitem{br3} ULLMAN J. D. - WIDOM J., 1997, A First Course in Database Systems, New Jersey : Prentice-Hall, 1997, 470s., 
-
-%\bibitem{br4} PREFUSE, 2007, The Prefuse visualization toolkit,  [online] Dostupné na internete: <http://prefuse.org/>
-
-%\bibitem{br5} PREFUSE Forum, Sourceforge - Prefuse Forum,  [online] Dostupné na internete: <http://sourceforge.net/projects/prefuse/>
-
-%\end{thebibliography}
-
 %---koniec Referencii
 
 % -------------------
@@ -294,7 +275,5 @@ Slovak language).
 %Zoznam príloh je súčasťou obsahu.
 %
 \input appendixA.tex
-
-\input appendixB.tex
 
 \end{document}

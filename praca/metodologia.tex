@@ -1,0 +1,43 @@
+\chapter{Prehľad protokolu WebTransport, metodológia fuzzingu a implementácia}
+\label{kap:metodologia}
+
+V tejto kapitole popisujeme protokol WebTransport, zvolenú metodológiu fuzzingu a detaily našej implementácie.
+
+\section{Protokol WebTransport}
+
+WebTransport funguje na základe QUIC protokolu, ktorý zabezpečuje spoľahlivý transport, multiplexovanie a šifrovanie, zatiaľ čo HTTP/3 pridáva vrstvu pre inicializáciu a riadenie kapsúl \cite{webtransport_http3}. Protokol zahŕňa stavy ako nadviazanie spojenia cez handshake, vytváranie bidirekcionálnych streamov pre dátový prenos, odosielanie datagramov pre nízko-latentné správy a manipuláciu chýb ako RESET\_STREAM alebo CONNECTION\_CLOSE.
+
+Architektúra WebTransportu pozostáva z nasledujúcich vrstiev:
+\begin{itemize}
+    \item Aplikácia (WebTransport API) \cite{webtransport_api}
+    \item HTTP/3 framing
+    \item QUIC transport
+    \item UDP sockety
+\end{itemize}
+
+Dáta prúdia cez streamy a datagramy medzi týmito vrstvami. Ako vznikajúci protokol je WebTransport stále v aktívnom vývoji, ale už prijatý v hlavných prehliadačoch, čo zdôrazňuje potrebu testovania na zabezpečenie spoľahlivosti.
+
+\section{Metodológia fuzzingu}
+
+Zvolený black/gray-box fuzzingový prístup nevyužíva inštrumentáciu, pretože fuzzujeme jazykovo-agnosticky, ale využíva znalosť fungovania WebTransportu na generovanie relevantných mutácií. Zameriava sa na:
+\begin{itemize}
+    \item Mutácie štruktúry správ
+    \item Duplikáciu sekvencií
+    \item Testovanie proti echo serverom
+\end{itemize}
+
+Detekcia chýb sa realizuje cez logy a pády bez prístupu k interným stavom servera.
+
+\section{Implementácia}
+
+Implementácia zahŕňa integráciu BooFuzz \cite{boofuzz_docs, boofuzz_github} s aioquic pre podporu QUIC, umožňujúc asynchrónnu komunikáciu a manipuláciu šifrovaných paketov. Upravili sme BooFuzz na podporu nepodporovaných funkcií ako duplikácia správ, pridajúc vlastné mutátory pre sekvencie kapsúl a rámcov.
+
+Testovali sme proti dvom implementáciám echo serverov:
+\begin{enumerate}
+    \item Lokálny echo server založený na W3C príklade v Pythone \cite{w3c_echo_server}
+    \item Rust wtransport knižnica \cite{wtransport_github}
+\end{enumerate}
+
+Detekcia pádov sa realizuje monitorovaním procesov a logov, identifikujúc anomálie ako paniky vlákien bez havárie celého servera.
+
+Zdrojový kód nášho fuzzeru je dostupný na adrese \url{https://github.com/qbitroot/webtransport-fuzzer}.

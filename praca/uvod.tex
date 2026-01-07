@@ -1,24 +1,13 @@
-\chapter*{Úvod} % chapter* je necislovana kapitola
-\addcontentsline{toc}{chapter}{Úvod} % rucne pridanie do obsahu
-\markboth{Úvod}{Úvod} % vyriesenie hlaviciek
+\chapter*{Úvod}
+\addcontentsline{toc}{chapter}{Úvod}
+\markboth{Úvod}{Úvod}
 
-Cieľom tejto práce je poskytnúť študentom posledného ročníka
-bakalárskeho štúdia informatiky kostru práce v systéme LaTeX a ukážku
-užitočných príkazov, ktoré pri písaní práce môžu potrebovať. Začneme
-stručnou charakteristikou úvodu práce podľa smernice o záverečných
-prácach \cite{smernica}, ktorú uvádzame ako doslovný citát.
+Fuzzing protokolov je dynamická testovacia technika používaná na objavovanie zraniteľností v softvérových implementáciách poskytovaním neplatných, neočakávaných alebo náhodných dát ako vstupov do programu, najmä v kontexte sieťových protokolov, kde pomáha odhaľovať chyby, ktoré statická analýza alebo tradičné testovanie môžu prehliadnuť. Fuzzing nie je náhradou formálnej verifikácie alebo vyčerpávajúceho testovania, ale ich dopĺňa simuláciou reálnych podmienok útočníka, často odhaľujúc okrajové prípady ako pretečenia bufferov, pády alebo logické chyby vznikajúce z deformovaných správ alebo neočakávaných sekvencií. Funguje na základe spätnej väzby, kde sa testovacie prípady generujú, vykonávajú a mutujú na základe pokrytia alebo detekcie pádov, čo ho robí obzvlášť efektívnym pre komplexné systémy ako sieťové stacky. Fuzzing však nie je neomylný; môže prehliadnuť jemné problémy založené na časovaní alebo vyžadovať značné výpočtové zdroje, a jeho efektivita závisí od kvality počiatočných seed vstupov a stratégií mutácie.
 
-\begin{quote}
-Úvod je prvou komplexnou informáciou o práci, jej cieli, obsahu a štruktúre. Úvod sa 
-vzťahuje na spracovanú tému konkrétne, obsahuje stručný a výstižný opis 
-problematiky, charakterizuje stav poznania alebo praxe v oblasti, ktorá je predmetom 
-školského diela a oboznamuje s významom, cieľmi a zámermi školského diela. Autor 
-v úvode zdôrazňuje, prečo je práca dôležitá a prečo sa rozhodol spracovať danú tému. 
-Úvod ako názov kapitoly sa nečísluje a jeho rozsah je spravidla 1 až 2 strany.
-\end{quote}
+WebTransport je moderné webové API, ktoré umožňuje nízko-latentnú, bidirekcionálnu a multiplexovanú komunikáciu medzi webovými klientmi a servermi, stavané na HTTP/3 a transportnom protokole QUIC \cite{webtransport_http3, webtransport_api}, poskytujúce funkcie ako streamy, datagramy a relácie pre aplikácie ako hranie hier, živé streamovanie a reálnu spoluprácu. Na vysokej úrovni WebTransport nadväzuje reláciu cez QUIC, ktorý riadi kontrolu preťaženia, multiplexovanie a obnovu strát, zatiaľ čo HTTP/3 poskytuje rámcovanie pre počiatočné handshaky a kapsule; protokol riadi stavy vrátane nadviazania spojenia, vytvárania streamov, prenosu dát a elegantného ukončenia, s manipuláciou chýb pre neplatné rámce alebo kapsule. Hoci WebTransport je stále aktívne vyvíjaný podľa najnovších IETF draftov, je už široko podporovaný v hlavných prehliadačoch ako Chrome, Firefox a Safari, čo odráža jeho rýchle prijatie na zlepšenie webového výkonu nad tradičné WebSockets. Táto novinka znamená, že v tejto oblasti nie je veľa práce s fuzzingom, čo predstavuje príležitosť prispieť k jeho spoľahlivosti v ranom štádiu životného cyklu.
 
-V nasledujúcej kapitole nájdete ukážku členenia kapitoly na menšie
-časti a v kapitole \ref{kap:latex} nájdete príkazy na prácu s
-tabuľkami, obrázkami a matematickými výrazmi. V závere textu sa
-budeme venovať záležitostiam záveru bakalárskych prác. 
+Zvolený black-box/gray-box fuzzingový prístup je výhodný, pretože považuje cieľ za čiernu skrinku bez potreby prístupu k zdrojovému kódu alebo inštrumentácie, čo ho robí jazykovo-agnostickým a vhodným pre testovanie rôznych implementácií ako tie v Pythone alebo Ruste, zatiaľ čo zahŕňa gray-box prvky cez znalosť špecifikácie protokolu na vedenie mutácií. Tento metóda je dobrá pre WebTransport, pretože umožňuje sústrediť sa na štruktúry správ a sekvencie bez hlbokej integrácie do špecifických runtimeov, umožňujúc širšiu aplikovateľnosť naprieč knižnicami serverov. Rozhodli sme sa vytvoriť univerzálny fuzzer namiesto jazykovo-špecifického s hlbokou inštrumentáciou, pretože to podporuje opätovné použitie, vyhýba sa závislostiam na interných stavoch, ktoré sa môžu líšiť podľa implementácie, a zodpovedá cieľu testovania echo serverov cez externé logovanie a detekciu pádov, zabezpečujúc, že fuzzer môže evoluovať s vývojom protokolu.
 
+Ciele práce zahŕňajú vývoj fuzzeru pomocou BooFuzz \cite{boofuzz_docs, boofuzz_github} s mutáciou štruktúry správ a duplikáciou sekvencií, testovanie proti echo serverom a analýzu výsledkov na identifikáciu zraniteľností, riešiac výzvy ako manipulácia šifrovania QUIC a evolučnej povahy protokolu.
+
+V kapitole~\ref{kap:suvisiace} popisujeme súvisiace práce a stav techniky v oblasti fuzzingu protokolov. V kapitole~\ref{kap:metodologia} predstavujeme prehľad protokolu WebTransport, metodológiu fuzzingu a našu implementáciu. V kapitole~\ref{kap:vysledky} prezentujeme výsledky, analýzu a diskusiu.

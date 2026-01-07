@@ -1,26 +1,19 @@
-\chapter*{Záver}  % chapter* je necislovana kapitola
-\addcontentsline{toc}{chapter}{Záver} % rucne pridanie do obsahu
-\markboth{Záver}{Záver} % vyriesenie hlaviciek
+\chapter*{Záver}
+\addcontentsline{toc}{chapter}{Záver}
+\markboth{Záver}{Záver}
 
-Na záver už len odporúčania k samotnej kapitole Záver v bakalárskej
-práci podľa smernice \cite{smernica}:  \uv{V závere je potrebné v
-stručnosti zhrnúť dosiahnuté výsledky vo vzťahu k stanoveným
-cieľom. Rozsah záveru je minimálne dve strany. Záver ako kapitola sa
-nečísluje.}
+Táto práca sa zaoberala fuzzingom protokolu WebTransport s cieľom identifikovať chyby v implementáciách a zraniteľnosti. Predstavili sme vyvinutý fuzzer založený na BooFuzz, ktorý zahŕňa mutácie štruktúry správ a duplikáciu sekvencií.
 
-Všimnite si správne písanie slovenských úvodzoviek okolo
-predchádzajúceho citátu, ktoré sme dosiahli príkazom \verb'\uv'.
+Kľúčové dosiahnutia tejto práce zahŕňajú:
+\begin{itemize}
+    \item Vývoj univerzálneho fuzzera pre protokol WebTransport s integráciou aioquic pre podporu QUIC
+    \item Aplikáciu techník mutácie a duplikácie sekvencií prispôsobených pre WebTransport
+    \item Analýzu výsledkov odhaľujúcich chyby v implementáciách, vrátane dosiahnuteľnej aserčnej chyby v Rust wtransport knižnici
+    \item Demonštráciu efektivity black/gray-box prístupu v odhaľovaní paník v pracovných vláknach
+\end{itemize}
 
-V informatických prácach niekedy býva záver kratší ako dve strany, ale
-stále by to mal byť rozumne dlhý text, v rozsahu aspoň jednej strany.
-Okrem dosiahnutých cieľov sa zvyknú rozoberať aj otvorené problémy a
-námety na ďalšiu prácu v oblasti.
+Náš príspevok posilňuje testovanie protokolov a prispieva k spoľahlivosti WebTransportu v ranom štádiu jeho životného cyklu. Práca odráža dôležité lekcie o význame jazykovo-agnostického prístupu pri testovaní evolučných štandardov.
 
-Abstrakt, úvod a záver práce obsahujú podobné informácie. Abstrakt je
-kratší text, ktorý má pomôcť čitateľovi sa rozhodnúť, či vôbec prácu
-chce čítať. Úvod má umožniť zorientovať sa v práci skôr než ju začne
-čítať a záver sumarizuje najdôležitejšie veci po tom, ako prácu
-prečítal, môže sa teda viac zamerať na detaily a využívať pojmy
-zavedené v práci.
+Širšie dopady na sieťovú bezpečnosť podčiarkujú potrebu skorého fuzzingu v nových webových technológiách na prevenciu zraniteľností v široko prijímaných systémoch. Keďže WebTransport je už implementovaný v hlavných prehliadačoch, ale stále sa aktívne vyvíja, včasná identifikácia a oprava chýb je kritická pre jeho bezpečné nasadenie.
 
-
+Budúca práca by mohla zahŕňať rozšírenie fuzzera o inteligentnejšie stratégie mutácie využívajúce strojové učenie, testovanie klientskej strany v prehliadačoch a aplikáciu na ďalšie implementácie protokolu. Zdrojový kód fuzzera je dostupný na stránke \url{https://github.com/qbitroot/webtransport-fuzzer}.
