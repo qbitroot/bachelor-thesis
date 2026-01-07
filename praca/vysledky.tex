@@ -5,18 +5,11 @@ V tejto kapitole prezentujeme výsledky fuzzingových kampaní, ich analýzu a d
 
 \section{Výsledky fuzzingových kampaní}
 
-Fuzzingové kampane odhalili niekoľko problémov, vrátane dosiahnuteľnej aserčnej chyby v Rust wtransport knižnici \cite{wtransport_github}, kde odoslanie drain kapsule bez správneho HTTP/3 rámca spôsobilo paniku pracovného vlákna, hoci to nehavarovalo celý server. V Rust by správna knižnica nikdy nemala panikovať, čo poukazuje na chybu v ošetrení chybových stavov.
+Fuzzingové kampane sú v súčasnosti v prebiehajúcej fáze. Testujeme implementácie WebTransportu s cieľom identifikovať potenciálne chyby a zraniteľnosti. Výsledky budú systematicky zaznamenávané a kategorizované podľa typu zisteného problému.
 
 \section{Analýza}
 
-Analýza ukázala, že mutácie sekvencií boli efektívnejšie v odhaľovaní stavovo-súvisiacich chýb než náhodné zmeny, s pokrytím viac ako 70\% kódových ciest v testovaných echo serveroch.
-
-Hlavné zistenia:
-\begin{itemize}
-    \item Duplikácia sekvencií kapsúl odhalila problémy so stavovým riadením
-    \item Mutácie rámcov HTTP/3 viedli k neočakávaným panikám v pracovných vláknach
-    \item Gray-box prístup s poznaním špecifikácie protokolu výrazne zlepšil efektivitu testovania
-\end{itemize}
+Analýza výsledkov sa zameriava na hodnotenie efektivity rôznych mutačných stratégií. Skúmame, ktoré typy mutácií sú najúčinnejšie pri odhaľovaní chýb v implementáciách WebTransportu. Porovnávame výsledky mutácií štruktúry správ s duplikáciou sekvencií a hodnotíme ich prínos pre testovanie protokolu.
 
 \section{Diskusia}
 
@@ -37,8 +30,6 @@ V porovnaní so súvisiacimi štúdiami fuzzingu ako v \cite{li2024fuzzing} ná�
 
 Navrhujeme nasledujúce vylepšenia pre budúcu prácu:
 \begin{itemize}
-    \item Integrácia LLM pre inteligentnejšie mutácie
     \item Rozšírenie na ďalšie implementácie WebTransportu
     \item Fuzzing klientskej strany v prehliadačoch
-    \item Testovanie reálnych aplikácií postavených nad WebTransportom
 \end{itemize}
