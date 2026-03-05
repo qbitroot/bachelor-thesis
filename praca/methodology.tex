@@ -63,7 +63,7 @@ A critical property of the Capsule Protocol, specified in RFC~9297, is that \tex
 The WebTransport specification has evolved through multiple IETF drafts. Two drafts are particularly relevant to our work:
 
 \begin{itemize}
-    \item \textbf{Draft-03} (July 2022): an early version that uses the \texttt{SETTINGS\_ENABLE\_WEBTRANSPORT} setting (value \texttt{0x2b603742}), does not define session-level flow control capsules, and uses the upgrade token \texttt{webtransport}. Session termination uses the \texttt{CLOSE\_WEBTRANSPORT\_SESSION} capsule (type \texttt{0x2843}).
+    \item \textbf{Draft-03} (July 2022): an early version that uses the \texttt{SETTINGS\_ENABLE\_WEBTRANSPORT} setting (value \texttt{0x2b603742}), does not define session-level flow control capsules, and uses the upgrade token \texttt{webtransport}. Session termination uses the \texttt{CLOSE\_WEBTRANSPORT\_\allowbreak SESSION} capsule (type \texttt{0x2843}).
     \item \textbf{Draft-15} (March 2026): the latest version that uses \texttt{SETTINGS\_WT\_ENABLED}, introduces session-level flow control capsules (\texttt{WT\_MAX\_STREAMS}, \texttt{WT\_MAX\_DATA}, etc.), uses the upgrade token \texttt{webtransport-h3}, and prohibits certain capsule types (\texttt{WT\_MAX\_STREAM\_DATA}, \texttt{WT\_STREAM\_DATA\_BLOCKED}).
 \end{itemize}
 

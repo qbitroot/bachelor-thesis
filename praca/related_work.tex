@@ -1,8 +1,6 @@
 \chapter{Related Work and State of the Art}
 \label{chap:related}
 
-{\small\noindent\textbf{Note for DÚ2 evaluators (remove before final submission):} The five pages submitted for evaluation are this chapter (Related Work and State of the Art).}
-
 In this chapter we describe related work in the area of protocol fuzzing and the current state of the art.
 
 The field of protocol fuzzing has evolved significantly, with various techniques aimed at uncovering vulnerabilities in network communications. A comprehensive survey by Chen et al.~\cite{chen2024survey} categorizes protocol fuzzing methods into generation-based, mutation-based, and hybrid approaches, highlighting the role of state-aware fuzzing in handling complex protocol interactions. The authors discuss challenges such as state explosion and the need for efficient seed selection, noting that while traditional black-box fuzzers like Peach and Sulley were foundational, modern tools incorporate AFL-inspired feedback mechanisms to improve coverage. They emphasize that protocol fuzzing differs from general software fuzzing due to the need for modeling message formats and sequences, often requiring domain-specific knowledge to avoid invalid test cases that are immediately rejected. The survey also covers evaluation metrics such as bug discovery rates and coverage depth, and points to limitations in handling encrypted protocols like QUIC, which underlies WebTransport, where decryption hooks or proxying are needed.

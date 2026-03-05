@@ -2,6 +2,8 @@
 \addcontentsline{toc}{chapter}{Introduction}
 \markboth{Introduction}{Introduction}
 
+{\small\noindent\textbf{Note for DÚ2 evaluators (remove before final submission):} The five pages submitted for evaluation are in Chapter~\ref{chap:methodology} (Protocol Overview, Methodology, and Implementation).}
+
 In this chapter we introduce the topic of protocol fuzzing, motivate the choice of WebTransport as a target, and outline the structure of the thesis.
 
 Protocol fuzzing is a dynamic testing technique used for discovering vulnerabilities in software implementations by providing invalid, unexpected, or random data as inputs to a program. In the context of network protocols, fuzzing helps uncover bugs that static analysis or traditional testing may miss. It is not a replacement for formal verification or exhaustive testing, but rather complements them by simulating realistic attacker conditions, often revealing edge cases such as buffer overflows, crashes, or logic errors arising from malformed messages or unexpected sequences. Fuzzing operates on a feedback-driven basis, where test cases are generated, executed, and mutated based on coverage or crash detection, making it particularly effective for complex systems such as network stacks. However, fuzzing is not infallible; it may miss subtle timing-based issues or require significant computational resources, and its effectiveness depends on the quality of initial seed inputs and mutation strategies.
