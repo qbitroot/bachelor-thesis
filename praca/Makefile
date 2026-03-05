@@ -1,5 +1,5 @@
 # Choose one: main.pdf (Slovak) or main-en.pdf (English)
-all: main.pdf
+all: main-en.pdf
 
 main.pdf: main.tex *.tex *.bib images/*
 	pdflatex main

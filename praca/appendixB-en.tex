@@ -1,14 +1,53 @@
 \chapter*{Appendix B: User Manual}
 \addcontentsline{toc}{chapter}{Appendix B}
-\markboth{Appendix B}{Appendix B} % vyriesenie hlaviciek
+\markboth{Appendix B}{Appendix B}
 
-V tejto prílohe uvádzame používateľskú príručku k nášmu softvéru. Tu
-by ďalej pokračoval text príručky. V práci nie je potrebné uvádzať
-používateľskú príručku, pokiaľ je používanie softvéru intuitívne
-alebo ak výsledkom práce nie je ucelený softvér určený pre
-používateľov.
+\section*{Prerequisites}
 
-V prílohách môžete uviesť aj ďalšie materiály, ktoré by mohli pôsobiť
-rušivo v hlavnom texte, ako napríklad rozsiahle tabuľky a
-podobne. Materiály, ktoré sú príliš dlhé na ich tlač, odovzdajte len v
-elektronickej prílohe.
+The fuzzer requires Python 3.10+ and the \texttt{uv} package manager. For the Rust echo server, a Rust toolchain is needed. TLS certificates (self-signed) are used for local testing.
+
+\section*{Basic Usage}
+
+\begin{lstlisting}[language=bash,frame=single]
+# Validate connection
+uv run python main.py --no-fuzz \
+    --url https://127.0.0.1:6161/echo
+
+# One-shot capsule fuzzer
+uv run python main.py --mode oneshot \
+    --url https://127.0.0.1:6161/echo
+
+# Multistep scenario fuzzer
+uv run python main.py --mode multistep \
+    --url https://127.0.0.1:6161/echo
+
+# With server subprocess management
+uv run python main.py --mode multistep \
+    --url https://127.0.0.1:6161/echo \
+    --server-cmd "uv run server/aioquic/server.py \
+        cert.pem key.pem 2>&1 | tee server.log"
+
+# Resume from a specific test case index
+uv run python main.py --mode multistep \
+    --start-index 42 --end-index 100
+\end{lstlisting}
+
+\section*{Server Fingerprinting}
+
+Before fuzzing, identify which draft generation the target implements:
+
+\begin{lstlisting}[language=bash,frame=single]
+uv run get-server-version.py --no-verify \
+    127.0.0.1 6161
+\end{lstlisting}
+
+\section*{Analyzing Results}
+
+After a fuzzing run, correlate test cases with server output:
+
+\begin{lstlisting}[language=bash,frame=single]
+uv run analyze_logs.py --log server.log \
+    --db boofuzz-results/run_<timestamp>.db
+\end{lstlisting}
+
+The BooFuzz web UI is available at \texttt{http://localhost:26000} during a run.

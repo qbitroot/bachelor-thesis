@@ -1,12 +1,19 @@
 \chapter*{Appendix A: Contents of the Online Appendix}
 \addcontentsline{toc}{chapter}{Appendix A}
-\markboth{Appendix A}{Appendix A} % vyriesenie hlaviciek
+\markboth{Appendix A}{Appendix A}
 
-The online appendix attached to this work contains the source code
-data files used in the analysis. The source code is available also at
-\url{http://mojadresa.com/}.
+The online appendix attached to this work contains the source code and
+data files used in the analysis. The source code is available at
+\url{https://github.com/qbitroot/webtransport-fuzzer}.
 
-Ak uznáte za vhodné, môžete tu aj podrobnejšie rozpísať obsah elektronickej
-prílohy, prípadne poskytnúť návod na inštaláciu programu. Alternatívou
-je tieto informácie zahrnúť do samotnej prílohy, alebo ich uviesť na
-obidvoch miestach.
+The repository contains:
+\begin{itemize}
+    \item \texttt{main.py} --- CLI entry point and BooFuzz session setup
+    \item \texttt{src/} --- fuzzer core: capsule definitions, sequence mutator, connection handler, WebTransport client, health check monitor, request logger, and server manager
+    \item \texttt{analyze\_logs.py} --- offline log correlation tool
+    \item \texttt{get-server-version.py} --- server draft-version fingerprinting tool
+    \item \texttt{server/aioquic/} --- Python echo server (draft-03)
+    \item \texttt{server/wtransport/} --- Rust echo server (draft-09)
+\end{itemize}
+
+To run the fuzzer, use \texttt{uv run python main.py} with the appropriate flags as described in the project README.

@@ -1,69 +1,49 @@
-\documentclass[12pt, twoside]{book}
-%\documentclass[12pt, oneside]{book}  % jednostranna tlac
+\documentclass[12pt, twoside, openany]{book}
+%\documentclass[12pt, oneside]{book}  % single-sided printing
 
-%spravne nastavenie okrajov
+% page margins
 \usepackage[a4paper,top=2.5cm,bottom=2.5cm,left=3.5cm,right=2cm]{geometry}
-%zapnutie fontov pre UTF8 kodovanie
+% UTF-8 font encoding
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 
-%zapnutie slovenskeho delenia slov
-%a automatickych nadpisov ako Obsah, Obrázok a pod. v slovencine
-%\usepackage[slovak]{babel} % vypnite pre prace v anglictine!
+% English thesis - babel for Slovak disabled
+%\usepackage[slovak]{babel}
 
-%nastavenie riadkovania podla smernice
-\linespread{1.25} % hodnota 1.25 by mala zodpovedat 1.5 riadkovaniu
+% line spacing per university guidelines
+\linespread{1.25} % 1.25 corresponds to 1.5 line spacing
 
-% balicek na vkladanie zdrojoveho kodu
+% source code listings
 \usepackage{listings}
-% ukazky kodu su cislovane ako Listing 1,2,...
-% tu je Listing zmenene na Algoritmus 1,2,...
-\renewcommand{\lstlistingname}{Algorithm}
-% nastavenia balicka listings
-% mozete pridat aj language=...
-% na nastavenie najcastejsie pouzivaneho prog. jazyka
-% takisto sa da zapnut cislovanie riadkov
+\renewcommand{\lstlistingname}{Listing}
 \lstset{frame=lines}
 
-% balicek na vkladanie obrazkov
+% graphics
 \usepackage{graphicx}
-% balicek na vkladanie celych pdf dokumentov, tu zadanie
+% include full PDF pages (for thesis assignment)
 \usepackage{pdfpages}
-% balicek na spravne formatovanie URL
+% proper URL formatting
 \usepackage{url}
-% balicek na hyperlinky v ramci dokumentu
-% zrusime farebne ramiky okolo liniek aby pdf
-% vyzeralo rovnako ako tlacena verzia
+% hyperlinks within the document
 \usepackage[hidelinks,breaklinks]{hyperref}
 
 
 % -------------------
-% --- Definicia zakladnych pojmov
-% --- Vyplnte podla vasho zadania, rok ma byt rok odovzdania
+% --- Basic definitions
 % -------------------
 \def\mfrok{2026}
-\def\mfnazov{Názov vašej bakalárskej práce}
+\def\mfnazov{WebTransport Protocol Fuzzing}
 \def\mftyp{Bachelor Thesis}
-\def\mfautor{Meno Priezvisko, príp. tituly}
-\def\mfskolitel{tit. Meno Priezvisko, tit. }
+\def\mfautor{Vladyslav Havriuk}
+\def\mfskolitel{doc. RNDr. Martin Stanek, PhD.}
 
-%ak mate konzultanta, odkomentujte aj jeho meno na titulnom liste
-\def\mfkonzultant{tit. Meno Priezvisko, tit. }  
+%\def\mfkonzultant{tit. Name Surname, tit. }
 
 \def\mfmiesto{Bratislava, \mfrok}
 
-% študenti BIN a DAV odkomentujú príslušnú dvojicu riadkov
 \def\mfodbor{Computer Science}
-\def\program{Computer Science }
-% pre BIN:
-%\def\mfodbor{Computer Science and Biology} 
-%\def\program{ Bioinformatics }
-% pre DAV:
-%\def\mfodbor{Computer Science and Mathematics} 
-%\def\program{ Data Science }
+\def\program{Computer Science}
 
-% Ak je školiteľ z FMFI, uvádzate katedru školiteľa, zrejme by mala byť aj na zadaní z AIS2
-% Ak máte externého školiteľa, uvádzajte Katedru informatiky 
 \def\mfpracovisko{ Department of Computer Science }
 
 \begin{document}     
@@ -71,13 +51,13 @@
 \pagestyle{empty}
 
 % -------------------
-% --- Obalka ------
+% --- Cover page ------
 % -------------------
 
 \begin{center}
-  \sc\large
-  Comenius University in Bratislava\\
-  Faculty of Mathematics, Physics and Informatics
+\sc\large
+Comenius University in Bratislava\\
+Faculty of Mathematics, Physics and Informatics
 
 \vfill
 
@@ -93,10 +73,10 @@
 }
 
 \cleardoublepage
-% --- koniec obalky ----
+% --- end of cover page ----
 
 % -------------------
-% --- Titulný list
+% --- Title page
 % -------------------
 
 \noindent
@@ -104,8 +84,8 @@
 \begin{center}
 \sc  
 \large
-  Comenius University in Bratislava\\
-  Faculty of Mathematics, Physics and Informatics
+Comenius University in Bratislava\\
+Faculty of Mathematics, Physics and Informatics
 
 \vfill
 
@@ -131,27 +111,26 @@ Supervisor: & \mfskolitel \\
 \mfautor
 
 \cleardoublepage
-% --- Koniec titulnej strany
+% --- End of title page
 
 
 % -------------------
-% --- Zadanie z AIS
+% --- Thesis assignment from AIS
 % -------------------
-% v tlačenej verzii s podpismi zainteresovaných osôb.
-% v elektronickej verzii sa zverejňuje zadanie bez podpisov
-% v pracach v anglictine anglicke aj slovenske zadanie
+% In English theses, both English and Slovak assignments are included
 
 \newpage
 \setcounter{page}{3}
-\includepdf{images/zadanie.pdf}
-
 \includepdf{images/zadanie-en.pdf}
 
-% --- Koniec zadania
+\newpage
+\input{zadanie.tex}
+
+% --- End of assignment
 
 
 % -------------------
-%   Čestné vyhlásenie a nepovinné poďakovanie
+%   Declaration and optional acknowledgments
 % -------------------
 \newpage
 \pagestyle{plain}
@@ -161,80 +140,57 @@ bachelor thesis entitled ``\mfnazov'', including all its
 figures and appendices, using the literature listed in the attached
 bibliography.
 
-% Uveďte na čo ste nástroje používali
-% Podľa typu použitia potom nástroje aj citujte v texte
-In preparation of the thesis I have also used the following artifical
-infelligence tools: [TOOLS] for the follwing purposes: [PURPOSES]. I
+In preparation of the thesis I have also used the following artificial
+intelligence tools: OpenAI ChatGPT and Anthropic Claude for the purposes of assisted writing and editing of text. I
 have used artificial intelligence tools in accordance with relevant
 legal regulations, academic rights and freedoms, ethical and moral
 principles while simultaneously maintaining academic integrity. I am
 aware that I am fully responsible for the accuracy of the final text.
 
-\paragraph{Acknowledgments:} Tu môžete poďakovať školiteľovi, prípadne
-ďalším osobám, ktoré vám s prácou nejako pomohli, poradili,
-poskytli dáta a podobne.
+\paragraph{Acknowledgments:} I would like to thank my supervisor doc. RNDr. Martin Stanek, PhD. for his expert guidance, valuable advice, and comments during the preparation of this thesis.
 
-% --- Koniec poďakovania
+% --- End of acknowledgments
 
 % -------------------
-%   Abstrakt - Slovensky
+%   Abstract - Slovak
 % -------------------
 \newpage 
 \section*{Abstrakt}
 
+Fuzzing protokolov je technika pou\v{z}\'{i}van\'{a} na testovanie implement\'{a}ci\'{i} protokolov. Bola \'{u}spe\v{s}ne pou\v{z}it\'{a} na identifik\'{a}ciu implementa\v{c}n\'{y}ch ch\'{y}b a bezpe\v{c}nostn\'{y}ch zranite\v{l}nost\'{i} v r\^{o}znych protokoloch. Cie\v{l}om tejto pr\'{a}ce je presk\'{u}ma\v{t} met\'{o}dy fuzzingu protokolov a aplikova\v{t} ich na re\'{a}lne implement\'{a}cie protokolu WebTransport. V\'{y}sledky s\'{u} analyzovan\'{e} a diskutovan\'{e}.
 
-Slovenský abstrakt v rozsahu 100-500 slov, jeden odstavec. Abstrakt
-stručne sumarizuje výsledky práce. Mal by byť pochopiteľný pre bežného
-informatika. Nemal by teda využívať skratky, termíny alebo označenie
-zavedené v práci, okrem tých, ktoré sú všeobecne známe.
+T\'{a}to pr\'{a}ca sa zaober\'{a} fuzzingom protokolov na identifik\'{a}ciu ch\'{y}b v implement\'{a}ci\'{a}ch a zranite\v{l}nost\'{i}. Predstavujeme vyvinut\'{y} fuzzer zalo\v{z}en\'{y} na BooFuzz pre protokol WebTransport, ktor\'{y} zah\v{r}\v{n}a mut\'{a}cie \v{s}trukt\'{u}ry spr\'{a}v a duplik\'{a}ciu sekvenci\'{i}. Pr\'{i}spevok spo\v{c}\'{i}va v integr\'{a}cii s aioquic pre QUIC podporu, testovan\'{i} na echo serveroch a anal\'{y}ze v\'{y}sledkov, vr\'{a}tane objavenia chyby v Rust kni\v{z}nici. V\'{y}sledky ukazuj\'{u} efektivitu pr\'{i}stupu v odha\v{l}ovan\'{i} pan\'{i}k v pracovn\'{y}ch vl\'{a}knach, prispieva\-j\'{u}c k spo\v{l}ahlivosti WebTransportu.
 
-\paragraph*{Kľúčové slová:} jedno, druhé, tretie (prípadne štvrté, piate)
-% --- Koniec Abstrakt - Slovensky
+\paragraph*{K\v{l}\'{u}\v{c}ov\'{e} slov\'{a}:} fuzzing, WebTransport, QUIC, HTTP/3, testovanie protokolov, bezpe\v{c}nos\v{t}
+% --- End of Slovak abstract
 
 
 % -------------------
-% --- Abstrakt - Anglicky 
+% --- Abstract - English 
 % -------------------
 \newpage 
 \section*{Abstract}
 
-Abstract in the English language (translation of the abstract in the
-Slovak language).
+Protocol fuzzing is a technique used to test protocol implementations. It has been successfully employed to identify implementation errors and security vulnerabilities in various protocols. The goal of this thesis is to explore methods of protocol fuzzing and apply them to real-world implementations of the WebTransport protocol. The results are analyzed and discussed.
 
+This thesis addresses protocol fuzzing for identifying bugs in implementations and vulnerabilities. We present a developed fuzzer based on BooFuzz for the WebTransport protocol, which includes message structure mutations and sequence duplication. The contribution lies in the integration with aioquic for QUIC support, testing on echo servers, and analysis of results, including the discovery of a bug in a Rust library. The results demonstrate the effectiveness of the approach in detecting worker thread panics, contributing to the reliability of WebTransport.
 
-\paragraph*{Keywords:} 
+\paragraph*{Keywords:} fuzzing, WebTransport, QUIC, HTTP/3, protocol testing, security
 
-% --- Koniec Abstrakt - Anglicky
-
-% -------------------
-% --- Predhovor - v informatike sa zvacsa nepouziva
-% -------------------
-%\newpage 
-%
-%
-%\chapter*{Preface} %
-%
-%Predhovor je všeobecná informácia o práci, obsahuje hlavnú charakteristiku práce 
-%a okolnosti jej vzniku. Autor zdôvodní výber témy, stručne informuje o cieľoch 
-%a význame práce, spomenie domáci a zahraničný kontext, komu je práca určená, 
-%použité metódy, stav poznania; autor stručne charakterizuje svoj prístup a svoje
-%hľadisko. 
-%
-% --- Koniec Predhovor
-
+% --- End of English abstract
 
 % -------------------
-% --- Obsah
+% --- Table of contents
 % -------------------
 
-\cleardoublepage 
+\cleardoublepage
 
 \tableofcontents
 
-% ---  Koniec Obsahu
+% ---  End of table of contents
 
 % -------------------
-% --- Zoznamy tabuliek, obrázkov, skratiek, slovník - nepovinné
+% --- Lists of figures, tables - optional
 % -------------------
 
 \newpage 
@@ -242,23 +198,24 @@ Slovak language).
 \listoffigures
 \listoftables
 
-% ---  Koniec Zoznamov
+% ---  End of lists
 
 \mainmatter
 \pagestyle{headings}
 
+
 \input intro.tex 
 
-\input chapter.tex
+\input related_work.tex
+
+\input methodology.tex
+
+\input results.tex
 
 \input conclusion.tex
 
-
-
-%\input zaver.tex
-
 % -------------------
-% --- Bibliografia
+% --- Bibliography
 % -------------------
 
 
@@ -272,38 +229,14 @@ Slovak language).
 \bibliographystyle{plain}
 \bibliography{literatura} 
 
-%Prípadne môžete napísať literatúru priamo tu
-%\begin{thebibliography}{5}
- 
-%\bibitem{br1} MOLINA H. G. - ULLMAN J. D. - WIDOM J., 2002, Database Systems, Upper Saddle River : Prentice-Hall, 2002, 1119 s., Pearson International edition, 0-13-098043-9
-
-%\bibitem{br2} MOLINA H. G. - ULLMAN J. D. - WIDOM J., 2000 , Databasse System implementation, New Jersey : Prentice-Hall, 2000, 653s., ???
-
-%\bibitem{br3} ULLMAN J. D. - WIDOM J., 1997, A First Course in Database Systems, New Jersey : Prentice-Hall, 1997, 470s., 
-
-%\bibitem{br4} PREFUSE, 2007, The Prefuse visualization toolkit,  [online] Dostupné na internete: <http://prefuse.org/>
-
-%\bibitem{br5} PREFUSE Forum, Sourceforge - Prefuse Forum,  [online] Dostupné na internete: <http://sourceforge.net/projects/prefuse/>
-
-%\end{thebibliography}
-
-%---koniec Referencii
+%---end of references
 
 % -------------------
-%--- Prilohy---
+%--- Appendices---
 % -------------------
 
-%Nepovinná časť prílohy obsahuje materiály, ktoré neboli zaradené priamo  do textu. Každá príloha sa začína na novej strane.
-%Zoznam príloh je súčasťou obsahu.
-%
 \input appendixA-en.tex
 
 \input appendixB-en.tex
 
 \end{document}
-
-
-
-
-
-

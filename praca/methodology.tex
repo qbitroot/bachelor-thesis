@@ -1,0 +1,49 @@
+\chapter{Protocol Overview, Methodology, and Implementation}
+\label{chap:methodology}
+
+In this chapter we describe the WebTransport protocol, the chosen fuzzing methodology, and the details of our implementation.
+
+\section{The WebTransport Protocol}
+
+WebTransport operates on top of the QUIC protocol, which provides reliable transport, multiplexing, and encryption, while HTTP/3 adds a layer for initialization and capsule management~\cite{webtransport_http3}. The protocol encompasses states such as connection establishment via handshake, creation of bidirectional streams for data transfer, sending datagrams for low-latency messages, and error handling such as RESET\_STREAM or CONNECTION\_CLOSE.
+
+The architecture of WebTransport consists of the following layers:
+\begin{itemize}
+    \item Application (WebTransport API)~\cite{webtransport_api}
+    \item HTTP/3 framing
+    \item QUIC transport
+    \item UDP sockets
+\end{itemize}
+
+Data flows through streams and datagrams between these layers. As an emerging protocol, WebTransport is still under active development but already adopted in major browsers, which underscores the need for testing to ensure reliability.
+
+\section{Fuzzing Methodology}
+
+The chosen black/gray-box fuzzing approach does not use instrumentation, since we fuzz in a language-agnostic manner, but leverages knowledge of how WebTransport works to generate relevant mutations. It focuses on:
+\begin{itemize}
+    \item Message structure mutations
+    \item Sequence duplication
+    \item Testing against echo servers
+\end{itemize}
+
+Error detection is performed through logs and crashes without access to the internal state of the server.
+
+Our fuzzer operates in two modes. The \textbf{oneshot} mode sends a single malformed capsule per connection on the CONNECT stream (the WebTransport session control channel). The capsule type, length field, and payload are all independently fuzzed using interesting boundary values, overlong VarInt encodings, and cross-layer type confusion. Each test case is one capsule blob; after sending, a health check via an echo probe on a fresh bidirectional stream verifies the server is still alive. This mode generates approximately 12\,000 test cases.
+
+The \textbf{multistep} mode executes multi-step scenarios that interleave real data activity with capsule sequences on a single live session. It is designed to trigger state-machine bugs: use-after-free, state confusion after close, crash-on-reorder, and similar issues. Each scenario is a list of steps, where each step can be a bidirectional stream exchange, a unidirectional stream send, a datagram, a raw capsule on the CONNECT stream, or a timed pause. The mutator generates all interesting variants from each scenario through permutations, duplication, omission, rapid-fire repetition, reversed order, prohibited capsule injection, and post-CLOSE activity. This mode produces approximately 920 unique test cases across 12 scenarios.
+
+\section{Implementation}
+
+The implementation involves integrating BooFuzz~\cite{boofuzz_docs, boofuzz_github} with aioquic for QUIC support, enabling asynchronous communication and handling of encrypted packets. We modified BooFuzz to support unsupported features such as message duplication, adding custom mutators for capsule and frame sequences.
+
+We tested against two echo server implementations:
+\begin{enumerate}
+    \item A local echo server based on the W3C example in Python~\cite{w3c_echo_server}
+    \item The Rust wtransport library~\cite{wtransport_github}
+\end{enumerate}
+
+Crash detection is performed by monitoring processes and logs, identifying anomalies such as thread panics without a crash of the entire server.
+
+All test cases are recorded to a SQLite database. Server output is SHA-256 fingerprinted, so multiple test cases producing identical server output share one log group row, making it easy to group by failure mode. Instrumented servers emit structured log lines in a custom format to stdout, enabling offline correlation of test cases with server output after a fuzzing run.
+
+The source code of our fuzzer is available at \url{https://github.com/qbitroot/webtransport-fuzzer}.

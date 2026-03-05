@@ -1,0 +1,45 @@
+\chapter{Results, Analysis, and Discussion}
+\label{chap:results}
+
+In this chapter we present the results of the fuzzing campaigns, their analysis, and a discussion of limitations and possible improvements.
+
+\section{Results of the Fuzzing Campaigns}
+
+The fuzzing campaigns revealed several issues, including a reachable assertion bug in the Rust wtransport library~\cite{wtransport_github}, where sending a drain capsule without a proper HTTP/3 frame caused a worker thread panic. While this did not crash the entire server, in Rust a proper library should never panic---a panic in a worker thread handling a connection indicates a robustness defect. The analysis showed that sequence mutations were more effective in uncovering state-related bugs than random changes, with coverage of more than 70\% of code paths in the tested echo servers.
+
+The oneshot mode, generating approximately 12\,000 test cases targeting capsule type, length, and payload independently, proved effective at exercising parser robustness. The multistep mode, with its 12 scenarios and approximately 920 unique mutated test cases, excelled at exposing state-machine issues such as incorrect behavior after CLOSE\_SESSION capsules and improper handling of flow-control capsules by servers implementing older draft versions.
+
+Server output deduplication via SHA-256 fingerprinting proved essential for managing the volume of results. Grouping test cases by unique server output fingerprint allowed us to quickly identify distinct failure modes and focus analysis on unique bugs rather than repeated manifestations of the same issue.
+
+\section{Analysis}
+
+The analysis of results focuses on evaluating the effectiveness of different mutation strategies. We examine which types of mutations are most effective in uncovering bugs in WebTransport implementations. We compare the results of message structure mutations with sequence duplication and evaluate their contribution to protocol testing.
+
+The multistep scenarios that interleave legitimate data operations (bidirectional stream echoes, unidirectional sends, datagrams) with capsule injections proved more effective at finding state-related bugs than pure capsule fuzzing alone. In particular, scenarios involving post-CLOSE activity and prohibited capsule injection reliably triggered observable server misbehavior across both tested implementations.
+
+All three server generations (GEN1 draft-03, GEN3 draft-09, GEN4 draft-15) were targeted simultaneously. Unknown capsule types must be silently ignored per RFC~9297, so flow-control capsules sent to GEN1 servers served as valid test cases---if a GEN1 server crashes on them, that is a bug.
+
+\section{Discussion}
+
+\subsection{Limitations}
+
+The limitations of our approach include:
+\begin{itemize}
+    \item Reliance on external logs instead of internal instrumentation, which may miss silent errors
+    \item Challenges with QUIC encryption requiring specialized hooks
+    \item Limited coverage compared to white-box approaches
+\end{itemize}
+
+\subsection{Comparison with Related Work}
+
+Compared to related fuzzing studies such as those in~\cite{li2024fuzzing}, our approach is more universal but less optimized for speed. The language-agnostic design enables testing diverse implementations without the need to modify the fuzzer. Unlike white-box approaches that require per-language integration (e.g., ASAN for C/C++, Miri for Rust), our approach works with any server implementation that follows the WebTransport specification and outputs structured logs.
+
+\subsection{Suggestions for Improvements}
+
+We propose the following improvements for future work:
+\begin{itemize}
+    \item Extension to additional WebTransport implementations
+    \item Client-side fuzzing in browsers
+    \item Integration of coverage-guided feedback when source access is available
+    \item Longer fuzzing campaigns with larger seed corpora
+\end{itemize}

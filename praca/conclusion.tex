@@ -1,5 +1,19 @@
-\chapter*{Conclusion} % chapter* je necislovana kapitola
-\addcontentsline{toc}{chapter}{Conclusion} % rucne pridanie do obsahu
-\markboth{Conclusion}{Conclusion} % vyriesenie hlaviciek
+\chapter*{Conclusion}
+\addcontentsline{toc}{chapter}{Conclusion}
+\markboth{Conclusion}{Conclusion}
 
-See file \verb'zaver.tex' for information about recommended contents of the Conclusion chapter.
+This thesis addressed fuzzing of the WebTransport protocol with the goal of identifying bugs in implementations and vulnerabilities. We presented a developed fuzzer based on BooFuzz that includes message structure mutations and sequence duplication.
+
+The key achievements of this thesis include:
+\begin{itemize}
+    \item Development of a universal fuzzer for the WebTransport protocol with aioquic integration for QUIC support
+    \item Application of mutation and sequence duplication techniques tailored for WebTransport
+    \item Analysis of results revealing bugs in implementations, including a reachable assertion bug in the Rust wtransport library
+    \item Demonstration of the effectiveness of the black/gray-box approach in detecting worker thread panics
+\end{itemize}
+
+Our contribution strengthens protocol testing and contributes to the reliability of WebTransport at an early stage of its lifecycle. The thesis reflects important lessons about the significance of a language-agnostic approach when testing evolving standards.
+
+The broader impacts on network security underscore the need for early fuzzing of new web technologies to prevent vulnerabilities in widely adopted systems. Since WebTransport is already implemented in major browsers but is still being actively developed, timely identification and fixing of bugs is critical for its safe deployment.
+
+Future work could include extending the fuzzer with smarter mutation strategies leveraging machine learning, client-side fuzzing in browsers, and application to additional implementations of the protocol. The source code of the fuzzer is available at \url{https://github.com/qbitroot/webtransport-fuzzer}.
