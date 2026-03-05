@@ -2,15 +2,9 @@
 \addcontentsline{toc}{chapter}{Conclusion}
 \markboth{Conclusion}{Conclusion}
 
-This thesis addressed fuzzing of the WebTransport protocol with the goal of identifying bugs in implementations and vulnerabilities. We presented a developed fuzzer based on BooFuzz that includes message structure mutations and sequence duplication.
+In this chapter we summarize the contributions of the thesis and outline directions for future work.
 
-The key achievements of this thesis include:
-\begin{itemize}
-    \item Development of a universal fuzzer for the WebTransport protocol with aioquic integration for QUIC support
-    \item Application of mutation and sequence duplication techniques tailored for WebTransport
-    \item Analysis of results revealing bugs in implementations, including a reachable assertion bug in the Rust wtransport library
-    \item Demonstration of the effectiveness of the black/gray-box approach in detecting worker thread panics
-\end{itemize}
+This thesis addressed fuzzing of the WebTransport protocol with the goal of identifying bugs in implementations and vulnerabilities. We presented a developed fuzzer based on BooFuzz that includes message structure mutations and sequence duplication. We developed a universal fuzzer for WebTransport with aioquic integration for QUIC support, applied mutation and sequence duplication techniques tailored to the protocol, and analyzed the results. The analysis revealed bugs in implementations, including a reachable assertion bug in the Rust wtransport library, and demonstrated the effectiveness of the black/gray-box approach in detecting worker thread panics.
 
 Our contribution strengthens protocol testing and contributes to the reliability of WebTransport at an early stage of its lifecycle. The thesis reflects important lessons about the significance of a language-agnostic approach when testing evolving standards.
 
