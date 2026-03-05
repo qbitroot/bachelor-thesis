@@ -1,5 +1,12 @@
 \begin{thebibliography}{10}
 
+\bibitem{RFC9114}
+M.~Bishop.
+\newblock {HTTP/3}.
+\newblock RFC 9114, 2022.
+\newblock DOI: 10.17487/RFC9114. Available at
+  \url{https://www.rfc-editor.org/rfc/rfc9114}.
+
 \bibitem{boofuzz_docs}
 {BooFuzz Contributors}.
 \newblock {BooFuzz} documentation, 2024.
@@ -31,6 +38,13 @@ Biagio Festa.
 \newblock IETF Draft. Available at
   \url{https://datatracker.ietf.org/doc/draft-ietf-webtrans-http3/}.
 
+\bibitem{RFC9000}
+J.~Iyengar and M.~Thomson.
+\newblock {QUIC}: A {UDP}-based multiplexed and secure transport.
+\newblock RFC 9000, 2021.
+\newblock DOI: 10.17487/RFC9000. Available at
+  \url{https://www.rfc-editor.org/rfc/rfc9000}.
+
 \bibitem{li2024fuzzing}
 X.~Li et~al.
 \newblock Fuzzing techniques for {IoT} and network protocols: A survey.
@@ -38,10 +52,24 @@ X.~Li et~al.
 \newblock arXiv:2503.19402. Available at
   \url{https://arxiv.org/pdf/2503.19402}.
 
+\bibitem{RFC8441}
+P.~McManus.
+\newblock Bootstrapping {WebSockets} with {HTTP/2}.
+\newblock RFC 8441, 2018.
+\newblock DOI: 10.17487/RFC8441. Available at
+  \url{https://www.rfc-editor.org/rfc/rfc8441}.
+
 \bibitem{boofuzz_github}
 Joshua Pereyda.
 \newblock {BooFuzz} {GitHub} repository, 2024.
 \newblock Available at \url{https://github.com/jtpereyda/boofuzz/}.
+
+\bibitem{RFC9297}
+D.~Schinazi and L.~Pardue.
+\newblock {HTTP} datagrams and the capsule protocol.
+\newblock RFC 9297, 2022.
+\newblock DOI: 10.17487/RFC9297. Available at
+  \url{https://www.rfc-editor.org/rfc/rfc9297}.
 
 \bibitem{w3c_echo_server}
 {W3C}.

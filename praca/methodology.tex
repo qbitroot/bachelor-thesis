@@ -1,49 +1,244 @@
 \chapter{Protocol Overview, Methodology, and Implementation}
 \label{chap:methodology}
 
-In this chapter we describe the WebTransport protocol, the chosen fuzzing methodology, and the details of our implementation.
+In this chapter we describe the WebTransport protocol in detail, define the fuzzing methodology we employ, and present the design of our experimental framework including test case generation, logging, and result analysis.
 
 \section{The WebTransport Protocol}
 
-WebTransport operates on top of the QUIC protocol, which provides reliable transport, multiplexing, and encryption, while HTTP/3 adds a layer for initialization and capsule management~\cite{webtransport_http3}. The protocol encompasses states such as connection establishment via handshake, creation of bidirectional streams for data transfer, sending datagrams for low-latency messages, and error handling such as RESET\_STREAM or CONNECTION\_CLOSE.
+WebTransport is a protocol framework that enables web clients to communicate with a remote server using a secure multiplexed transport~\cite{webtransport_http3, webtransport_api}. It is built on top of HTTP/3 and the QUIC transport protocol, inheriting their properties of encryption, multiplexing, and congestion control. WebTransport provides three data transport mechanisms---bidirectional streams, unidirectional streams, and datagrams---all multiplexed within a single HTTP/3 connection.
 
-The architecture of WebTransport consists of the following layers:
+\subsection{Layering: QUIC, HTTP/3, and WebTransport}
+
+The layering of WebTransport is central to understanding both the protocol and our fuzzing approach. At the lowest level, QUIC~\cite{RFC9000} provides a secure, multiplexed transport over UDP. QUIC natively supports multiple independent byte streams, each with its own flow control, which eliminates head-of-line blocking between streams. On top of QUIC, HTTP/3~\cite{RFC9114} maps HTTP semantics: it defines how QUIC streams carry control data and HTTP request/response messages in the form of frames.
+
+WebTransport uses HTTP/3 only for the initial session handshake. Once a session is established, applications have nearly direct access to QUIC streams. The layering can be summarized as follows:
+
 \begin{itemize}
-    \item Application (WebTransport API)~\cite{webtransport_api}
-    \item HTTP/3 framing
-    \item QUIC transport
-    \item UDP sockets
+    \item \textbf{Application layer} --- the WebTransport API~\cite{webtransport_api} exposed to web applications
+    \item \textbf{HTTP/3 framing} --- used for the initial CONNECT handshake and for capsule exchange on the CONNECT stream
+    \item \textbf{QUIC transport} --- provides streams, datagrams, flow control, congestion control, and encryption
+    \item \textbf{UDP} --- the underlying network transport
 \end{itemize}
 
-Data flows through streams and datagrams between these layers. As an emerging protocol, WebTransport is still under active development but already adopted in major browsers, which underscores the need for testing to ensure reliability.
+\subsection{Session Establishment}
+
+A WebTransport session is initiated by a client sending an extended CONNECT request~\cite{RFC8441} over HTTP/3. The server indicates support for WebTransport by sending a WebTransport-specific setting in its HTTP/3 SETTINGS frame. Both endpoints must also negotiate support for HTTP/3 datagrams and the Capsule Protocol. If the server accepts the CONNECT request (responding with a 2xx status code), the WebTransport session is established. The resulting HTTP/3 stream is called the \emph{CONNECT stream}, and its stream ID serves as the \emph{Session ID} that uniquely identifies the session within the connection.
+
+\subsection{QUIC Streams in WebTransport}
+\label{sec:quic-streams}
+
+After session establishment, WebTransport data is carried directly on QUIC streams, bypassing HTTP/3 framing for the payload. Each WebTransport stream begins with a small header that links it to the session:
+
+\begin{itemize}
+    \item \textbf{Bidirectional streams} begin with a signal value \texttt{0x41} (the \texttt{WT\_STREAM} frame type) followed by the Session ID encoded as a QUIC variable-length integer. The remainder of the stream carries application data.
+    \item \textbf{Unidirectional streams} use HTTP/3 unidirectional stream type \texttt{0x54}, followed by the Session ID, followed by user-specified data.
+    \item \textbf{Datagrams} are sent using HTTP Datagrams, where the payload directly follows the Quarter Stream ID field referencing the CONNECT stream.
+\end{itemize}
+
+The QUIC variable-length integer encoding used for Session IDs and other fields is a key detail for fuzzing: it uses 1, 2, 4, or 8 bytes depending on the magnitude of the value, with the two most significant bits of the first byte indicating the encoding length. Malformed or overlong encodings are a natural mutation target.
+
+\subsection{Capsules on the CONNECT Stream}
+\label{sec:capsules}
+
+The CONNECT stream that established the session carries \emph{capsules}---typed, length-prefixed messages defined by the Capsule Protocol~\cite{RFC9297}. Each capsule has the format:
+
+\begin{verbatim}
+  Capsule {
+    Capsule Type (i),
+    Capsule Length (i),
+    Capsule Value (..)
+  }
+\end{verbatim}
+
+\noindent where both the type and length are encoded as QUIC variable-length integers. WebTransport defines several capsule types for session management and flow control:
+
+\begin{itemize}
+    \item \texttt{CLOSE\_WEBTRANSPORT\_SESSION} (type \texttt{0x2843}) --- terminates a session with an application error code and an optional error message
+    \item \texttt{WT\_DRAIN\_SESSION} (type \texttt{0x78ae}) --- signals graceful shutdown of a session
+    \item \texttt{WT\_MAX\_STREAMS} --- limits the number of streams within a session (analogous to the QUIC \texttt{MAX\_STREAMS} frame, but at the session level)
+    \item \texttt{WT\_STREAMS\_BLOCKED} --- indicates inability to create a stream due to session-level limits
+    \item \texttt{WT\_MAX\_DATA} --- establishes a data limit within a session
+    \item \texttt{WT\_DATA\_BLOCKED} --- indicates inability to send data due to session-level limits
+    \item \texttt{WT\_MAX\_STREAM\_DATA} and \texttt{WT\_STREAM\_DATA\_BLOCKED} --- prohibited in WebTransport over HTTP/3 (draft-15, \S5.4); their receipt \emph{must} be treated as a session error
+\end{itemize}
+
+A critical property of the Capsule Protocol, specified in RFC~9297, is that \textbf{unknown capsule types must be silently ignored}. This property is fundamental to the universality of our fuzzer: capsule types that are defined only in later draft versions (such as the flow-control capsules introduced in draft-09 and later) will be silently ignored by servers implementing earlier drafts, but if such a server crashes on an unknown capsule, that constitutes a bug.
+
+\subsection{Draft Versions and Compatibility}
+\label{sec:draft-compat}
+
+The WebTransport specification has evolved through multiple IETF drafts. Two drafts are particularly relevant to our work:
+
+\begin{itemize}
+    \item \textbf{Draft-03} (July 2022): an early version that uses the \texttt{SETTINGS\_ENABLE\_WEBTRANSPORT} setting (value \texttt{0x2b603742}), does not define session-level flow control capsules, and uses the upgrade token \texttt{webtransport}. Session termination uses the \texttt{CLOSE\_WEBTRANSPORT\_SESSION} capsule (type \texttt{0x2843}).
+    \item \textbf{Draft-15} (March 2026): the latest version that uses \texttt{SETTINGS\_WT\_ENABLED}, introduces session-level flow control capsules (\texttt{WT\_MAX\_STREAMS}, \texttt{WT\_MAX\_DATA}, etc.), uses the upgrade token \texttt{webtransport-h3}, and prohibits certain capsule types (\texttt{WT\_MAX\_STREAM\_DATA}, \texttt{WT\_STREAM\_DATA\_BLOCKED}).
+\end{itemize}
+
+The key differences between drafts lie in the capsule types exchanged on the CONNECT stream and the SETTINGS parameters used during connection setup. The underlying QUIC stream mechanics---bidirectional streams prefixed with \texttt{0x41}, unidirectional streams with type \texttt{0x54}, and HTTP datagrams---remain the same across drafts. This means a fuzzer that operates at the QUIC stream level and capsule level is inherently compatible with all draft versions: the data transport paths are identical, and unknown capsule types are safely ignored by compliant servers.
+
+\section{Fuzzing: Definitions and Approach}
+
+\subsection{What is Fuzzing}
+
+Fuzzing (or fuzz testing) is a dynamic software testing technique that provides invalid, unexpected, or semi-random data as input to a program in order to discover bugs, crashes, or security vulnerabilities. In the context of network protocols, fuzzing targets the message processing logic of an implementation by sending malformed or unexpected protocol messages and observing the server's behavior.
+
+Fuzzers are typically classified along two axes:
+
+\begin{itemize}
+    \item \textbf{By input generation strategy}: \emph{generation-based} fuzzers construct inputs from a protocol specification or grammar, while \emph{mutation-based} fuzzers modify existing valid inputs. Hybrid approaches combine both.
+    \item \textbf{By level of program knowledge}: \emph{black-box} fuzzers treat the target as an opaque system with no access to source code or internal state; \emph{white-box} fuzzers use instrumentation (e.g., code coverage, address sanitizers) to guide input generation; \emph{gray-box} fuzzers use partial knowledge, such as protocol specifications, without requiring source-level instrumentation.
+\end{itemize}
+
+\subsection{Our Approach: Black/Gray-Box Protocol Fuzzing}
+
+We adopt a black/gray-box approach: the fuzzer treats the server as a black box (no source code access, no instrumentation), but leverages knowledge of the WebTransport protocol specification to construct meaningful test cases. This design is motivated by two considerations:
+
+\begin{enumerate}
+    \item \textbf{Language-agnostic testing}: WebTransport servers are implemented in diverse languages (Python, Rust, Go, C++). A fuzzer that requires per-language instrumentation (e.g., ASAN for C/C++, Miri for Rust) would need to be adapted for each target. Our approach works with any server that speaks the WebTransport protocol.
+    \item \textbf{Specification-driven mutations}: rather than random byte flipping, we use knowledge of the capsule format (type/length/payload structure), QUIC variable-length integer encoding, and the protocol state machine to generate mutations that are likely to exercise interesting code paths---boundary values, overlong encodings, cross-layer type confusion, and state-violating sequences.
+\end{enumerate}
+
+Error detection relies entirely on external observation: process crashes, non-zero exit codes, thread panics visible in server logs, and failure to respond to health-check probes. This is less precise than instrumentation-based approaches but sufficient for detecting robustness defects such as panics, assertion failures, and unhandled error conditions.
 
 \section{Fuzzing Methodology}
 
-The chosen black/gray-box fuzzing approach does not use instrumentation, since we fuzz in a language-agnostic manner, but leverages knowledge of how WebTransport works to generate relevant mutations. It focuses on:
+\subsection{Oneshot Mode: Single Capsule Mutations}
+
+The oneshot mode sends a single malformed capsule per connection on the CONNECT stream. The capsule type, length field, and payload are independently fuzzed using:
+
 \begin{itemize}
-    \item Message structure mutations
-    \item Sequence duplication
-    \item Testing against echo servers
+    \item Interesting boundary values (0, 1, $2^{n}-1$, $2^{n}$, maximum VarInt values)
+    \item Overlong QUIC variable-length integer encodings (e.g., encoding 0 using 2, 4, or 8 bytes)
+    \item Cross-layer type confusion: injecting QUIC frame type bytes or HTTP/3 frame type bytes as capsule type values
+    \item Truncated and oversized payloads relative to the declared length
 \end{itemize}
 
-Error detection is performed through logs and crashes without access to the internal state of the server.
+Each test case consists of one \texttt{[CapsuleType][CapsuleLength][Payload]} blob sent on the CONNECT stream. After sending, the fuzzer performs a health check: it opens a fresh bidirectional stream, sends an echo probe, and verifies that the server responds. A failure to respond indicates the server has entered a bad state. This mode generates approximately 12\,000 test cases.
 
-Our fuzzer operates in two modes. The \textbf{oneshot} mode sends a single malformed capsule per connection on the CONNECT stream (the WebTransport session control channel). The capsule type, length field, and payload are all independently fuzzed using interesting boundary values, overlong VarInt encodings, and cross-layer type confusion. Each test case is one capsule blob; after sending, a health check via an echo probe on a fresh bidirectional stream verifies the server is still alive. This mode generates approximately 12\,000 test cases.
+\subsection{Multistep Mode: Scenario-Based Sequence Mutations}
 
-The \textbf{multistep} mode executes multi-step scenarios that interleave real data activity with capsule sequences on a single live session. It is designed to trigger state-machine bugs: use-after-free, state confusion after close, crash-on-reorder, and similar issues. Each scenario is a list of steps, where each step can be a bidirectional stream exchange, a unidirectional stream send, a datagram, a raw capsule on the CONNECT stream, or a timed pause. The mutator generates all interesting variants from each scenario through permutations, duplication, omission, rapid-fire repetition, reversed order, prohibited capsule injection, and post-CLOSE activity. This mode produces approximately 920 unique test cases across 12 scenarios.
+The multistep mode executes multi-step scenarios that interleave legitimate data operations with capsule sequences on a single live session. It is designed to trigger state-machine bugs: use-after-free, state confusion after session close, crash-on-reorder, and similar defects. Each scenario is a list of steps, where each step is one of:
 
-\section{Implementation}
+\begin{itemize}
+    \item \texttt{bidi(payload)} --- opens a bidirectional WebTransport stream, sends the payload, awaits an echo response (with a 1-second timeout; timeout is non-fatal)
+    \item \texttt{uni(payload)} --- opens a unidirectional stream and sends the payload
+    \item \texttt{datagram(payload)} --- sends a QUIC datagram
+    \item \texttt{capsule(data)} --- sends a raw capsule on the CONNECT stream
+    \item \texttt{sleep(duration)} --- pauses between steps
+\end{itemize}
 
-The implementation involves integrating BooFuzz~\cite{boofuzz_docs, boofuzz_github} with aioquic for QUIC support, enabling asynchronous communication and handling of encrypted packets. We modified BooFuzz to support unsupported features such as message duplication, adding custom mutators for capsule and frame sequences.
+From each base scenario, the \emph{mutator} generates all interesting variants:
+
+\begin{itemize}
+    \item All permutations (reordering of steps)
+    \item Each step duplicated in place and at end of the sequence
+    \item Each step omitted
+    \item Rapid-fire repetition: same step repeated 2, 5, and 10 times
+    \item Reversed order
+    \item Prohibited capsule injection at every position (\texttt{WT\_MAX\_STREAM\_DATA} / \texttt{WT\_STREAM\_DATA\_BLOCKED}, which per draft-15 \S5.4 must cause a session error)
+    \item Post-CLOSE activity: sending data (bidi/uni/datagram/capsule) after a \texttt{CLOSE\_SESSION} capsule
+\end{itemize}
+
+There are 12 base scenarios covering common usage patterns and edge cases: close races with active echoes, all three transport paths followed by teardown, capsule disruption of stream processing, drain while streams are active, flow control with live data, error code parsing, rapid stream creation, datagram floods, uni/capsule interleaving, contradictory flow-control limits, and blocked-then-create sequences. The mutator produces approximately 920 unique test cases across all scenarios.
+
+\subsection{Version Compatibility of the Fuzzer}
+\label{sec:version-compat}
+
+A key design property of the fuzzer is its universality across draft versions. The tested servers implement different drafts:
+
+\begin{itemize}
+    \item The Python echo server (based on aioquic) implements draft-03
+    \item The Rust echo server (based on wtransport) implements draft-09
+\end{itemize}
+
+Despite these differences, the same fuzzer targets all servers simultaneously. This is possible because:
+
+\begin{enumerate}
+    \item The QUIC stream mechanics are identical across all drafts: bidirectional streams prefixed with \texttt{0x41} and Session ID, unidirectional streams with type \texttt{0x54} and Session ID, and QUIC datagrams.
+    \item The capsule format (type/length/payload) is the same across drafts; only the set of defined capsule types changes.
+    \item Per RFC~9297, unknown capsule types must be silently ignored. Therefore, flow-control capsules (introduced in draft-09+) sent to a draft-03 server are valid test cases: a compliant server ignores them, while a non-compliant server that crashes reveals a bug.
+\end{enumerate}
+
+The fuzzer adapts only the initial connection setup (SETTINGS parameter values and the upgrade token) based on the target's draft version, which is determined before the fuzzing run using a fingerprinting tool.
+
+\section{Logging and Result Analysis}
+\label{sec:logging}
+
+A systematic approach to logging and result analysis is essential for making sense of thousands of test cases. Our methodology comprises three components: a test case database, a structured server log format, and an offline correlation tool.
+
+\subsection{Test Case Database}
+
+All test cases are recorded to a SQLite database (by default at \texttt{boofuzz-results/run\_<timestamp>.db}). The database uses the following schema:
+
+\begin{verbatim}
+  test_cases
+    id              INTEGER PRIMARY KEY
+    test_index      INTEGER     -- mutant index
+    sent_data       TEXT        -- newline-separated steps
+    is_healthcheck  INTEGER     -- 1 for post-test echo probes
+    log_group_id    INTEGER FK  -- references log_groups(id)
+    timestamp       REAL
+
+  log_groups
+    id              INTEGER PRIMARY KEY
+    fingerprint     TEXT UNIQUE -- SHA-256 of server output
+    raw_text        TEXT        -- full server output
+\end{verbatim}
+
+The \texttt{sent\_data} field records exactly what was sent to the server, one line per step in the format \texttt{action(hex-payload)}:
+
+\begin{verbatim}
+  bidi(48454c4c4f)
+  capsule(800078ae00)
+  uni(554e49)
+  datagram(4447)
+\end{verbatim}
+
+\textbf{Deduplication via fingerprinting}: server output for each test case is hashed with SHA-256. Multiple test cases that produce identical server output share a single \texttt{log\_groups} row. This grouping is critical for managing the volume of results: instead of examining 12\,000+ individual outputs, we analyze a much smaller set of distinct \emph{failure modes}, each represented by a unique fingerprint.
+
+\subsection{WTFUZZ Structured Server Log Format}
+
+To enable correlation between fuzzer-sent test cases and server-side behavior, we define a structured log format. Instrumented servers emit lines to \textbf{stdout} in the following format:
+
+\begin{verbatim}
+  WTFUZZ|<conn_idx>|EVENT|key1=val1|key2=val2|...
+\end{verbatim}
+
+\noindent where \texttt{conn\_idx} is a global connection counter (starting at~0) and \texttt{EVENT} is one of a defined set of event types:
+
+\begin{itemize}
+    \item \texttt{SERVER\_READY} --- server is listening (with \texttt{bind=host:port})
+    \item \texttt{SESSION\_OPEN} / \texttt{SESSION\_CLOSE} --- session lifecycle events
+    \item \texttt{RECV\_BIDI}, \texttt{RECV\_UNI}, \texttt{RECV\_DATAGRAM} --- data received on the respective transport
+    \item \texttt{ECHO} --- echo response sent (with type and stream/session ID)
+    \item \texttt{STREAM\_RESET} --- stream reset received (with error code)
+\end{itemize}
+
+Standard logging (warnings, stack traces) goes to \textbf{stderr} and is not captured by the pipeline. Any server line not starting with \texttt{WTFUZZ|} is flagged as \texttt{[SERVER RAW]}---these lines typically indicate panics, assertion failures, or unexpected behavior that is of primary interest during analysis.
+
+\subsection{Offline Log Correlation}
+
+After a fuzzing run, the offline correlation tool matches the test case database with the server log:
+
+\begin{verbatim}
+  analyze_logs.py --log server.log
+                  --db boofuzz-results/run_<timestamp>.db
+\end{verbatim}
+
+The tool parses the server log, matches connection indices to test case indices, and populates the \texttt{log\_group\_id} field in the database. Each test case is associated with the server output it produced, enabling queries such as: ``show all test cases that produced a panic'' or ``group test cases by unique server response.'' This two-phase approach (fuzzing first, analysis offline) decouples the fuzzer from the analysis logic and allows re-analysis with different criteria without re-running the campaign.
+
+\section{Implementation Overview}
+
+The implementation integrates BooFuzz~\cite{boofuzz_docs, boofuzz_github} with aioquic for QUIC support, enabling asynchronous communication over encrypted QUIC connections. BooFuzz provides the session management, test case scheduling, and web-based monitoring interface, while aioquic handles the QUIC handshake, stream creation, and datagram sending.
+
+We extended BooFuzz to support features not present in the original framework: sequence-level mutations (permutation, duplication, omission), custom monitors for health checking via echo probes, and a request logger that writes test cases to the SQLite database described above.
 
 We tested against two echo server implementations:
 \begin{enumerate}
-    \item A local echo server based on the W3C example in Python~\cite{w3c_echo_server}
-    \item The Rust wtransport library~\cite{wtransport_github}
+    \item A Python echo server based on aioquic, implementing draft-03~\cite{w3c_echo_server}
+    \item A Rust echo server based on the wtransport library, implementing draft-09~\cite{wtransport_github}
 \end{enumerate}
 
-Crash detection is performed by monitoring processes and logs, identifying anomalies such as thread panics without a crash of the entire server.
+Both servers were instrumented to emit the WTFUZZ structured log format. Crash detection is performed by monitoring process state and server logs, identifying anomalies such as thread panics without a crash of the entire server process.
 
-All test cases are recorded to a SQLite database. Server output is SHA-256 fingerprinted, so multiple test cases producing identical server output share one log group row, making it easy to group by failure mode. Instrumented servers emit structured log lines in a custom format to stdout, enabling offline correlation of test cases with server output after a fuzzing run.
-
-The source code of our fuzzer is available at \url{https://github.com/qbitroot/webtransport-fuzzer}.
+The source code of the fuzzer is available at \url{https://github.com/qbitroot/webtransport-fuzzer}.

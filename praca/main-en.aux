@@ -35,43 +35,71 @@
 \@writefile{toc}{\contentsline {section}{\numberline {1.1}Comparison with Our Work}{4}{section.1.1}\protected@file@percent }
 \citation{webtransport_http3}
 \citation{webtransport_api}
+\citation{RFC9000}
+\citation{RFC9114}
+\citation{webtransport_api}
 \@writefile{toc}{\contentsline {chapter}{\numberline {2}Protocol Overview, Methodology, and Implementation}{6}{chapter.2}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
 \newlabel{chap:methodology}{{2}{6}{Protocol Overview, Methodology, and Implementation}{chapter.2}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {2.1}The WebTransport Protocol}{6}{section.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1.1}Layering: QUIC, HTTP/3, and WebTransport}{6}{subsection.2.1.1}\protected@file@percent }
+\citation{RFC8441}
+\citation{RFC9297}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1.2}Session Establishment}{7}{subsection.2.1.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1.3}QUIC Streams in WebTransport}{7}{subsection.2.1.3}\protected@file@percent }
+\newlabel{sec:quic-streams}{{2.1.3}{7}{QUIC Streams in WebTransport}{subsection.2.1.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1.4}Capsules on the CONNECT Stream}{8}{subsection.2.1.4}\protected@file@percent }
+\newlabel{sec:capsules}{{2.1.4}{8}{Capsules on the CONNECT Stream}{subsection.2.1.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1.5}Draft Versions and Compatibility}{8}{subsection.2.1.5}\protected@file@percent }
+\newlabel{sec:draft-compat}{{2.1.5}{8}{Draft Versions and Compatibility}{subsection.2.1.5}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {2.2}Fuzzing: Definitions and Approach}{9}{section.2.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2.1}What is Fuzzing}{9}{subsection.2.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2.2}Our Approach: Black/Gray-Box Protocol Fuzzing}{10}{subsection.2.2.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {2.3}Fuzzing Methodology}{10}{section.2.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3.1}Oneshot Mode: Single Capsule Mutations}{10}{subsection.2.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3.2}Multistep Mode: Scenario-Based Sequence Mutations}{11}{subsection.2.3.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3.3}Version Compatibility of the Fuzzer}{12}{subsection.2.3.3}\protected@file@percent }
+\newlabel{sec:version-compat}{{2.3.3}{12}{Version Compatibility of the Fuzzer}{subsection.2.3.3}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {2.4}Logging and Result Analysis}{12}{section.2.4}\protected@file@percent }
+\newlabel{sec:logging}{{2.4}{12}{Logging and Result Analysis}{section.2.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4.1}Test Case Database}{12}{subsection.2.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4.2}WTFUZZ Structured Server Log Format}{13}{subsection.2.4.2}\protected@file@percent }
 \citation{boofuzz_docs}
 \citation{boofuzz_github}
 \citation{w3c_echo_server}
 \citation{wtransport_github}
-\@writefile{toc}{\contentsline {section}{\numberline {2.2}Fuzzing Methodology}{7}{section.2.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {2.3}Implementation}{7}{section.2.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4.3}Offline Log Correlation}{14}{subsection.2.4.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {2.5}Implementation Overview}{14}{section.2.5}\protected@file@percent }
 \citation{wtransport_github}
-\@writefile{toc}{\contentsline {chapter}{\numberline {3}Results, Analysis, and Discussion}{9}{chapter.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{\numberline {3}Results, Analysis, and Discussion}{15}{chapter.3}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\newlabel{chap:results}{{3}{9}{Results, Analysis, and Discussion}{chapter.3}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {3.1}Results of the Fuzzing Campaigns}{9}{section.3.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {3.2}Analysis}{9}{section.3.2}\protected@file@percent }
+\newlabel{chap:results}{{3}{15}{Results, Analysis, and Discussion}{chapter.3}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3.1}Results of the Fuzzing Campaigns}{15}{section.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3.2}Analysis}{15}{section.3.2}\protected@file@percent }
 \citation{li2024fuzzing}
-\@writefile{toc}{\contentsline {section}{\numberline {3.3}Discussion}{10}{section.3.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.3.1}Limitations}{10}{subsection.3.3.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.3.2}Comparison with Related Work}{10}{subsection.3.3.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.3.3}Suggestions for Improvements}{10}{subsection.3.3.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {chapter}{Conclusion}{12}{chapter*.11}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3.3}Discussion}{16}{section.3.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3.1}Limitations}{16}{subsection.3.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3.2}Comparison with Related Work}{16}{subsection.3.3.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3.3}Suggestions for Improvements}{16}{subsection.3.3.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{Conclusion}{18}{chapter*.11}\protected@file@percent }
 \bibstyle{plain}
 \bibdata{literatura}
-\bibcite{boofuzz_docs}{1}
-\bibcite{chen2024survey}{2}
-\bibcite{daniele2024libafl}{3}
-\bibcite{wtransport_github}{4}
-\bibcite{webtransport_http3}{5}
-\bibcite{li2024fuzzing}{6}
-\bibcite{boofuzz_github}{7}
-\bibcite{w3c_echo_server}{8}
-\bibcite{webtransport_api}{9}
-\bibcite{wang2024enhancing}{10}
-\@writefile{toc}{\contentsline {chapter}{References}{13}{chapter*.11}\protected@file@percent }
-\@writefile{toc}{\contentsline {chapter}{Appendix A}{14}{chapter*.13}\protected@file@percent }
-\@writefile{toc}{\contentsline {chapter}{Appendix B}{15}{chapter*.14}\protected@file@percent }
-\gdef \@abspage@last{30}
+\bibcite{RFC9114}{1}
+\bibcite{boofuzz_docs}{2}
+\bibcite{chen2024survey}{3}
+\bibcite{daniele2024libafl}{4}
+\bibcite{wtransport_github}{5}
+\bibcite{webtransport_http3}{6}
+\bibcite{RFC9000}{7}
+\bibcite{li2024fuzzing}{8}
+\bibcite{RFC8441}{9}
+\bibcite{boofuzz_github}{10}
+\bibcite{RFC9297}{11}
+\bibcite{w3c_echo_server}{12}
+\@writefile{toc}{\contentsline {chapter}{References}{19}{chapter*.11}\protected@file@percent }
+\bibcite{webtransport_api}{13}
+\bibcite{wang2024enhancing}{14}
+\@writefile{toc}{\contentsline {chapter}{Appendix A}{21}{chapter*.13}\protected@file@percent }
+\gdef \@abspage@last{35}
