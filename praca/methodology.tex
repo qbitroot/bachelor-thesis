@@ -1,4 +1,4 @@
-\chapter{Protocol Overview, Methodology, and Implementation}
+\chapter{Protocol Overview, Methodology, and\\Implementation}
 \label{chap:methodology}
 
 In this chapter we describe the WebTransport protocol in detail, define the fuzzing methodology we employ, and present the design of our experimental framework including test case generation, logging, and result analysis.
@@ -68,7 +68,7 @@ The CONNECT stream that established the session carries \emph{capsules}---typed,
     \item \texttt{WT\_STREAMS\_BLOCKED} --- indicates inability to create a stream due to session-level limits
     \item \texttt{WT\_MAX\_DATA} --- establishes a data limit within a session
     \item \texttt{WT\_DATA\_BLOCKED} --- indicates inability to send data due to session-level limits
-    \item \texttt{WT\_MAX\_STREAM\_DATA} and \texttt{WT\_STREAM\_DATA\_BLOCKED} --- prohibited in WebTransport over HTTP/3 (draft-15, \S5.4); their receipt \emph{must} be treated as a session error
+    \item \texttt{WT\_MAX\_STREAM\-\_DATA} and \texttt{WT\_STREAM\-\_DATA\-\_BLOCKED} --- prohibited in WebTransport over HTTP/3 (draft-15, \S5.4); their receipt \emph{must} be treated as a session error
 \end{itemize}
 
 A critical property of the Capsule Protocol, specified in RFC~9297, is that \textbf{unknown capsule types must be silently ignored}. This ensures forward compatibility: when new capsule types are introduced in later draft versions, servers implementing earlier drafts will safely discard them rather than treating them as errors. A server that crashes on an unrecognized capsule type violates this requirement.
@@ -79,8 +79,8 @@ A critical property of the Capsule Protocol, specified in RFC~9297, is that \tex
 The WebTransport specification has evolved through multiple IETF drafts. Two drafts are particularly relevant:
 
 \begin{itemize}
-    \item \textbf{Draft-03} (July 2022): an early version that uses the \texttt{SETTINGS\_ENABLE\_WEBTRANSPORT} setting (value \texttt{0x2b603742}), does not define session-level flow control capsules, and uses the upgrade token \texttt{webtransport}. Session termination uses the \texttt{CLOSE\_WEBTRANSPORT\_\allowbreak SESSION} capsule (type \texttt{0x2843}).
-    \item \textbf{Draft-15} (March 2026): the latest version that uses \texttt{SETTINGS\_WT\_ENABLED}, introduces session-level flow control capsules (\texttt{WT\_MAX\_STREAMS}, \texttt{WT\_MAX\_DATA}, etc.), uses the upgrade token \texttt{webtransport-h3}, and prohibits certain capsule types (\texttt{WT\_MAX\_STREAM\_DATA}, \texttt{WT\_STREAM\_DATA\_BLOCKED}).
+    \item \textbf{Draft-03} (July 2022): an early version that uses the \texttt{SETTINGS\-\_ENABLE\-\_WEBTRANSPORT} setting (value \texttt{0x2b603742}), does not define session-level flow control capsules, and uses the upgrade token \texttt{webtransport}. Session termination uses the \texttt{CLOSE\-\_WEBTRANSPORT\-\_SESSION} capsule (type \texttt{0x2843}).
+    \item \textbf{Draft-15} (March 2026): the latest version that uses \texttt{SETTINGS\_WT\_ENABLED}, introduces session-level flow control capsules (\texttt{WT\_MAX\_STREAMS}, \texttt{WT\_MAX\_DATA}, etc.), uses the upgrade token \texttt{webtransport-h3}, and prohibits certain capsule types (\texttt{WT\_MAX\-\_STREAM\_DATA}, \texttt{WT\_STREAM\-\_DATA\-\_BLOCKED}).
 \end{itemize}
 
 The key differences between drafts lie in the capsule types exchanged on the CONNECT stream and the SETTINGS parameters used during connection setup. The underlying QUIC stream mechanics---bidirectional streams prefixed with \texttt{0x41}, unidirectional streams with type \texttt{0x54}, and HTTP datagrams---remain the same across drafts. Because unknown capsule types are silently ignored per RFC~9297 (see Section~\ref{sec:capsules}), the data transport paths and capsule framing are compatible across all draft versions.
@@ -113,7 +113,7 @@ The oneshot mode sends a single malformed capsule per connection on the CONNECT 
 \paragraph{Mutation value pool.} The fuzzer constructs a unified pool of byte sequences that is used for \emph{both} the capsule type and the length/payload fields. The pool contains four categories of values:
 
 \begin{enumerate}
-    \item \textbf{Valid capsule types} in their canonical VarInt encoding---for example, \texttt{CLOSE\_SESSION} encoded as \texttt{0x6843} (2-byte VarInt for value \texttt{0x2843}) and \texttt{DRAIN\_SESSION} as \texttt{0x800078ae} (4-byte VarInt for \texttt{0x78AE}).
+    \item \textbf{Valid capsule types} in their canonical VarInt encoding. For example, \texttt{CLOSE\-\_SESSION} is encoded as \texttt{0x6843} (the canonical 2-byte VarInt for value \texttt{0x2843}), and \texttt{DRAIN\-\_SESSION} as \texttt{0x800078ae} (the canonical 4-byte VarInt for \texttt{0x78AE}).
 
     \item \textbf{Interesting numeric boundaries} encoded as QUIC VarInts. These exercise boundary conditions in VarInt parsing:
 
@@ -182,7 +182,7 @@ The multistep mode executes multi-step scenarios that interleave legitimate data
     3. capsule(CLOSE_SESSION)  -- terminate session
 \end{verbatim}
 
-\noindent Other scenarios include \texttt{all\_transports\_then\_close} (exercise all three data paths before teardown), \texttt{capsule\_between\_bidi} (inject a \texttt{MAX\_DATA} capsule between two bidirectional echo exchanges), \texttt{drain\_mid\_data} (drain while streams are active), \texttt{rapid\_bidi\_close} (burst of stream creation before close), and \texttt{kitchen\_sink} (all six action types in a single sequence for maximum permutation surface). The full list of 12 scenarios is provided in Appendix~\ref{appendix:scenarios}.
+Other scenarios include \texttt{all\-\_transports\-\_then\-\_close} (all three transport paths then teardown), \texttt{capsule\-\_between\-\_bidi} (inject a \texttt{MAX\_DATA} capsule between two echo exchanges), \texttt{drain\-\_mid\-\_data} (drain while streams are active), \texttt{rapid\-\_bidi\-\_close} (rapid stream creation before close), and \texttt{kitchen\-\_sink} (all six action types for maximum permutation surface). The full list of 12 scenarios is in Appendix~\ref{appendix:scenarios}.
 
 \paragraph{Mutation engine.} From each base scenario, the mutator generates all interesting variants using the following strategies:
 
@@ -199,7 +199,7 @@ The multistep mode executes multi-step scenarios that interleave legitimate data
 
     \item \textbf{Rapid-fire}: each non-sleep step is repeated 2, 5, and 10 times. For example, 10 consecutive \texttt{bidi("HELLO")} calls test rapid stream creation.
 
-    \item \textbf{Prohibited capsule injection}: well-formed but prohibited capsules (\texttt{WT\_MAX\_STREAM\_DATA} and \texttt{WT\_STREAM\_DATA\_BLOCKED}, which per draft-15 \S5.4 must cause a session error) are injected at every position in the sequence. For a 3-step scenario, this yields $2 \times 4 = 8$ injection variants.
+    \item \textbf{Prohibited capsule injection}: well-formed but prohibited capsules (\texttt{WT\_MAX\-\_STREAM\-\_DATA} and \texttt{WT\_STREAM\-\_DATA\-\_BLOCKED}, which per draft-15 \S5.4 must cause a session error) are injected at every position in the sequence. For a 3-step scenario, this yields $2 \times 4 = 8$ injection variants.
 
     \item \textbf{Post-CLOSE activity}: for scenarios containing a \texttt{CLOSE\_SESSION} capsule, additional steps are appended after the close---a bidirectional stream, a unidirectional stream, a datagram, a drain capsule, and each prohibited capsule---testing whether the server correctly rejects activity on a closed session.
 \end{enumerate}
@@ -213,9 +213,9 @@ The scenario-lastfuzz mode combines the state-richness of multistep scenarios wi
 For example, given the \texttt{bidi\_then\_shutdown} scenario (bidi $\to$ drain $\to$ close), the prefix \texttt{[bidi, drain]} is executed normally, placing the server in a post-drain state. Then a fuzzed capsule such as an overlong-encoded \texttt{CLOSE\_SESSION} or a truncated VarInt is sent:
 
 \begin{verbatim}
-  1. bidi("HELLO")              -- legitimate traffic
-  2. capsule(DRAIN_SESSION)     -- legitimate drain
-  3. capsule(0xc000000000002843 0x00)  -- fuzzed: overlong CLOSE
+  1. bidi("HELLO")               -- legitimate traffic
+  2. capsule(DRAIN_SESSION)      -- legitimate drain
+  3. capsule(c00000000000284300) -- fuzzed: [Type=overlong CLOSE][Len=0]
 \end{verbatim}
 
 \noindent The number of test cases is the product of the 12 scenarios and the number of fuzz values from the oneshot pool. Unlike multistep mode, scenario-lastfuzz does not permute or mutate the step order---it tests capsule-level robustness in each reachable protocol state.
