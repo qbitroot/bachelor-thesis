@@ -17,3 +17,33 @@ The repository contains:
 \end{itemize}
 
 To run the fuzzer, use \texttt{uv run python main.py} with the appropriate flags as described in the project README.
+
+\section*{Multistep Fuzzing Scenarios}
+\label{appendix:scenarios}
+
+Table~\ref{tab:scenarios} lists all 12 base scenarios used in the multistep and scenario-lastfuzz fuzzing modes. Each scenario is a manually designed sequence of steps that exercises a specific protocol usage pattern or edge case. The mutation engine (Section~\ref{sec:version-compat}) generates all interesting variants from each scenario.
+
+\begin{table}[ht]
+\centering
+\caption{Multistep base scenarios}
+\label{tab:scenarios}
+\small
+\begin{tabular}{lp{4.8cm}p{4.5cm}}
+\hline
+\textbf{Scenario} & \textbf{Steps} & \textbf{Target behavior} \\
+\hline
+\texttt{bidi\_then\_shutdown} & bidi $\to$ drain $\to$ close & Close race with active echo \\
+\texttt{all\_transports\_then\_close} & bidi + uni + dgram $\to$ close & All 3 paths, then teardown \\
+\texttt{capsule\_between\_bidi} & bidi $\to$ MAX\_DATA $\to$ bidi & Capsule disrupts stream processing \\
+\texttt{drain\_mid\_data} & bidi $\to$ drain $\to$ bidi + uni & Drain while streams are active \\
+\texttt{flow\_with\_streams} & MAX\_STREAMS $\to$ bidi $\to$ MAX\_DATA $\to$ uni & Flow control with live data \\
+\texttt{close\_error\_after\_data} & bidi + dgram $\to$ close(42, msg) & Error code parsing after activity \\
+\texttt{rapid\_bidi\_close} & bidi $\times$ 3 $\to$ close & Rapid stream creation before close \\
+\texttt{datagram\_flood\_drain} & dgram $\times$ 3 $\to$ drain & Drain during datagram processing \\
+\texttt{uni\_capsule\_interleave} & uni/capsule alternating $\times$ 5 & Capsules don't corrupt uni handling \\
+\texttt{kitchen\_sink} & all 6 action types & Maximum permutation surface \\
+\texttt{contradictory\_limits} & MAX\_DATA(0) $\to$ bidi $\to$ MAX\_DATA(64K) $\to$ bidi & Limit changes with live data \\
+\texttt{blocked\_then\_create} & BLOCKED $\to$ bidi $\to$ BLOCKED $\to$ uni & Streams despite blocked signal \\
+\hline
+\end{tabular}
+\end{table}

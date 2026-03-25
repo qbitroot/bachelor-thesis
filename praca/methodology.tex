@@ -9,7 +9,7 @@ WebTransport is a protocol framework that enables web clients to communicate wit
 
 \subsection{Layering: QUIC, HTTP/3, and WebTransport}
 
-The layering of WebTransport is central to understanding both the protocol and our fuzzing approach. At the lowest level, QUIC~\cite{RFC9000} provides a secure, multiplexed transport over UDP. QUIC natively supports multiple independent byte streams, each with its own flow control, which eliminates head-of-line blocking between streams. On top of QUIC, HTTP/3~\cite{RFC9114} maps HTTP semantics: it defines how QUIC streams carry control data and HTTP request/response messages in the form of frames.
+The layering of WebTransport is central to understanding the protocol. At the lowest level, QUIC~\cite{RFC9000} provides a secure, multiplexed transport over UDP. QUIC natively supports multiple independent byte streams, each with its own flow control, which eliminates head-of-line blocking between streams. On top of QUIC, HTTP/3~\cite{RFC9114} maps HTTP semantics: it defines how QUIC streams carry control data and HTTP request/response messages in the form of frames.
 
 WebTransport uses HTTP/3 only for the initial session handshake. Once a session is established, applications have nearly direct access to QUIC streams. From bottom to top, the stack consists of UDP as the underlying network transport, QUIC providing streams, datagrams, flow control, congestion control, and encryption, HTTP/3 framing used for the initial CONNECT handshake and capsule exchange on the CONNECT stream, and finally the WebTransport API~\cite{webtransport_api} exposed to web applications.
 
@@ -28,7 +28,23 @@ After session establishment, WebTransport data is carried directly on QUIC strea
     \item \textbf{Datagrams} are sent using HTTP Datagrams, where the payload directly follows the Quarter Stream ID field referencing the CONNECT stream.
 \end{itemize}
 
-The QUIC variable-length integer encoding used for Session IDs and other fields is a key detail for fuzzing: it uses 1, 2, 4, or 8 bytes depending on the magnitude of the value, with the two most significant bits of the first byte indicating the encoding length. Malformed or overlong encodings are a natural mutation target.
+The QUIC variable-length integer encoding used for Session IDs and other fields uses 1, 2, 4, or 8 bytes depending on the magnitude of the value, with the two most significant bits of the first byte indicating the encoding length (see Table~\ref{tab:varint-encoding}). Only the shortest encoding that can represent a given value is considered canonical; longer encodings of the same value (overlong encodings) are technically valid at the wire level but may be handled inconsistently by implementations.
+
+\begin{table}[ht]
+\centering
+\caption{QUIC Variable-Length Integer Encoding (RFC~9000, \S16)}
+\label{tab:varint-encoding}
+\begin{tabular}{cccc}
+\hline
+\textbf{Prefix bits} & \textbf{Byte length} & \textbf{Value range} & \textbf{Example (value 0)} \\
+\hline
+\texttt{00} & 1 & 0--63 & \texttt{0x00} \\
+\texttt{01} & 2 & 0--16\,383 & \texttt{0x4000} \\
+\texttt{10} & 4 & 0--$2^{30}-1$ & \texttt{0x80000000} \\
+\texttt{11} & 8 & 0--$2^{62}-1$ & \texttt{0xc000000000000000} \\
+\hline
+\end{tabular}
+\end{table}
 
 \subsection{Capsules on the CONNECT Stream}
 \label{sec:capsules}
@@ -55,54 +71,161 @@ The CONNECT stream that established the session carries \emph{capsules}---typed,
     \item \texttt{WT\_MAX\_STREAM\_DATA} and \texttt{WT\_STREAM\_DATA\_BLOCKED} --- prohibited in WebTransport over HTTP/3 (draft-15, \S5.4); their receipt \emph{must} be treated as a session error
 \end{itemize}
 
-A critical property of the Capsule Protocol, specified in RFC~9297, is that \textbf{unknown capsule types must be silently ignored}. This property is fundamental to the universality of our fuzzer: capsule types that are defined only in later draft versions (such as the flow-control capsules introduced in draft-09 and later) will be silently ignored by servers implementing earlier drafts, but if such a server crashes on an unknown capsule, that constitutes a bug.
+A critical property of the Capsule Protocol, specified in RFC~9297, is that \textbf{unknown capsule types must be silently ignored}. This ensures forward compatibility: when new capsule types are introduced in later draft versions, servers implementing earlier drafts will safely discard them rather than treating them as errors. A server that crashes on an unrecognized capsule type violates this requirement.
 
 \subsection{Draft Versions and Compatibility}
 \label{sec:draft-compat}
 
-The WebTransport specification has evolved through multiple IETF drafts. Two drafts are particularly relevant to our work:
+The WebTransport specification has evolved through multiple IETF drafts. Two drafts are particularly relevant:
 
 \begin{itemize}
     \item \textbf{Draft-03} (July 2022): an early version that uses the \texttt{SETTINGS\_ENABLE\_WEBTRANSPORT} setting (value \texttt{0x2b603742}), does not define session-level flow control capsules, and uses the upgrade token \texttt{webtransport}. Session termination uses the \texttt{CLOSE\_WEBTRANSPORT\_\allowbreak SESSION} capsule (type \texttt{0x2843}).
     \item \textbf{Draft-15} (March 2026): the latest version that uses \texttt{SETTINGS\_WT\_ENABLED}, introduces session-level flow control capsules (\texttt{WT\_MAX\_STREAMS}, \texttt{WT\_MAX\_DATA}, etc.), uses the upgrade token \texttt{webtransport-h3}, and prohibits certain capsule types (\texttt{WT\_MAX\_STREAM\_DATA}, \texttt{WT\_STREAM\_DATA\_BLOCKED}).
 \end{itemize}
 
-The key differences between drafts lie in the capsule types exchanged on the CONNECT stream and the SETTINGS parameters used during connection setup. The underlying QUIC stream mechanics---bidirectional streams prefixed with \texttt{0x41}, unidirectional streams with type \texttt{0x54}, and HTTP datagrams---remain the same across drafts. This means a fuzzer that operates at the QUIC stream level and capsule level is inherently compatible with all draft versions: the data transport paths are identical, and unknown capsule types are safely ignored by compliant servers.
+The key differences between drafts lie in the capsule types exchanged on the CONNECT stream and the SETTINGS parameters used during connection setup. The underlying QUIC stream mechanics---bidirectional streams prefixed with \texttt{0x41}, unidirectional streams with type \texttt{0x54}, and HTTP datagrams---remain the same across drafts. Because unknown capsule types are silently ignored per RFC~9297 (see Section~\ref{sec:capsules}), the data transport paths and capsule framing are compatible across all draft versions.
 
-\section{Fuzzing: Definitions and Approach}
-
-\subsection{What is Fuzzing}
+\section{Fuzzing Background}
 
 Fuzzing (or fuzz testing) is a dynamic software testing technique that provides invalid, unexpected, or semi-random data as input to a program in order to discover bugs, crashes, or security vulnerabilities. In the context of network protocols, fuzzing targets the message processing logic of an implementation by sending malformed or unexpected protocol messages and observing the server's behavior.
 
-Fuzzers are typically classified along two axes. By input generation strategy, \emph{generation-based} fuzzers construct inputs from a protocol specification or grammar, \emph{mutation-based} fuzzers modify existing valid inputs, and hybrid approaches combine both. By level of program knowledge, \emph{black-box} fuzzers treat the target as an opaque system with no access to source code or internal state; \emph{white-box} fuzzers use instrumentation (e.g., code coverage, address sanitizers) to guide input generation; and \emph{gray-box} fuzzers use partial knowledge, such as protocol specifications, without requiring source-level instrumentation.
+Fuzzers are typically classified along two axes. By \emph{input generation strategy}, generation-based fuzzers construct inputs from a protocol specification or grammar, mutation-based fuzzers modify existing valid inputs, and hybrid approaches combine both. By \emph{level of program knowledge}, black-box fuzzers treat the target as an opaque system with no access to source code or internal state; white-box fuzzers use instrumentation (e.g., code coverage, address sanitizers) to guide input generation; and gray-box fuzzers use partial knowledge, such as protocol specifications, without requiring source-level instrumentation.
 
-\subsection{Our Approach: Black/Gray-Box Protocol Fuzzing}
+Error detection in protocol fuzzing can be \emph{instrumentation-based} (e.g., AddressSanitizer, code coverage counters) or \emph{observation-based} (e.g., monitoring for process crashes, non-zero exit codes, log anomalies, or failure to respond to probes). Instrumentation-based detection is more precise but requires access to the target's source code and a per-language toolchain. Observation-based detection is less precise but language-agnostic, making it applicable to any target regardless of implementation language.
 
-We adopt a black/gray-box approach: the fuzzer treats the server as a black box (no source code access, no instrumentation), but leverages knowledge of the WebTransport protocol specification to construct meaningful test cases. This design is motivated by two considerations. First, \textbf{language-agnostic testing}: WebTransport servers are implemented in diverse languages (Python, Rust, Go, C++), and a fuzzer that requires per-language instrumentation (e.g., ASAN for C/C++, Miri for Rust) would need to be adapted for each target, whereas our approach works with any server that speaks the WebTransport protocol. Second, \textbf{specification-driven mutations}: rather than random byte flipping, we use knowledge of the capsule format (type/length/payload structure), QUIC variable-length integer encoding, and the protocol state machine to generate mutations that are likely to exercise interesting code paths---boundary values, overlong encodings, cross-layer type confusion, and state-violating sequences.
+\section{Our Fuzzing Approach}
 
-Error detection relies entirely on external observation: process crashes, non-zero exit codes, thread panics visible in server logs, and failure to respond to health-check probes. This is less precise than instrumentation-based approaches but sufficient for detecting robustness defects such as panics, assertion failures, and unhandled error conditions.
+We adopt a black/gray-box approach. The fuzzer treats the server as a black box---no source code access, no instrumentation---but leverages knowledge of the WebTransport protocol specification to construct meaningful test cases. This design is motivated by two considerations:
+
+\begin{itemize}
+    \item \textbf{Language-agnostic testing.} WebTransport servers are implemented in diverse languages (Python, Rust, Go, C++). A fuzzer that requires per-language instrumentation (e.g., ASAN for C/C++, Miri for Rust) would need to be adapted for each target. Our approach works with any server that speaks the WebTransport protocol.
+    \item \textbf{Specification-driven mutations.} Rather than random byte flipping, we use knowledge of the capsule format (type/length/payload structure), QUIC variable-length integer encoding, and the protocol state machine to generate mutations that are likely to exercise interesting code paths---boundary values, overlong encodings, cross-layer type confusion, and state-violating sequences.
+\end{itemize}
+
+For error detection, we rely on external observation: process crashes, non-zero exit codes, thread panics visible in server logs, and failure to respond to health-check probes. As discussed above, this observation-based approach is less precise than instrumentation but sufficient for detecting robustness defects such as panics, assertion failures, and unhandled error conditions---and it allows us to test servers in any language without modification.
 
 \section{Fuzzing Methodology}
 
 \subsection{Oneshot Mode: Single Capsule Mutations}
 
-The oneshot mode sends a single malformed capsule per connection on the CONNECT stream. The capsule type, length field, and payload are independently fuzzed using interesting boundary values (0, 1, $2^{n}-1$, $2^{n}$, maximum VarInt values), overlong QUIC variable-length integer encodings (e.g., encoding 0 using 2, 4, or 8 bytes), cross-layer type confusion by injecting QUIC or HTTP/3 frame type bytes as capsule type values, and truncated or oversized payloads relative to the declared length.
+The oneshot mode sends a single malformed capsule per connection on the CONNECT stream. Each test case consists of one \texttt{[CapsuleType][CapsuleLength][Payload]} blob. The fuzzer independently varies the capsule type and the length-plus-payload fields, drawing values from a shared pool of interesting byte sequences. After sending, a health check (echo probe on a fresh bidirectional stream) verifies that the server is still alive; a failure to respond indicates the server has entered a bad state.
 
-Each test case consists of one \texttt{[CapsuleType][CapsuleLength][Payload]} blob sent on the CONNECT stream. After sending, the fuzzer performs a health check: it opens a fresh bidirectional stream, sends an echo probe, and verifies that the server responds. A failure to respond indicates the server has entered a bad state. This mode generates approximately 12\,000 test cases.
+\paragraph{Mutation value pool.} The fuzzer constructs a unified pool of byte sequences that is used for \emph{both} the capsule type and the length/payload fields. The pool contains four categories of values:
+
+\begin{enumerate}
+    \item \textbf{Valid capsule types} in their canonical VarInt encoding---for example, \texttt{CLOSE\_SESSION} encoded as \texttt{0x6843} (2-byte VarInt for value \texttt{0x2843}) and \texttt{DRAIN\_SESSION} as \texttt{0x800078ae} (4-byte VarInt for \texttt{0x78AE}).
+
+    \item \textbf{Interesting numeric boundaries} encoded as QUIC VarInts. These exercise boundary conditions in VarInt parsing:
+
+\begin{verbatim}
+  Value 63  -> 0x3f           (1-byte max)
+  Value 64  -> 0x4040         (2-byte min)
+  Value 16383 -> 0x7fff       (2-byte max)
+  Value 16384 -> 0x80004000   (4-byte min)
+  Value 2^62-1 -> 0xffffffffffffffff  (8-byte max)
+\end{verbatim}
+
+    \item \textbf{Malformed and overlong VarInt encodings.} These test how implementations handle non-canonical encodings---for example, encoding the \texttt{CLOSE\_SESSION} type (\texttt{0x2843}) using an unnecessarily long 4-byte or 8-byte VarInt instead of the canonical 2-byte form:
+
+\begin{verbatim}
+  Canonical:  0x6843             (2 bytes)
+  Overlong:   0x80002843         (4 bytes, same value)
+  Overlong:   0xc000000000002843 (8 bytes, same value)
+\end{verbatim}
+
+    Other malformed values include truncated VarInts (e.g., only 2 of the 4 bytes required by the prefix), the maximum 8-byte value \texttt{0xffffffffffffffff} (which exceeds $2^{62}-1$ and is invalid), and an empty field (zero bytes).
+
+    \item \textbf{Cross-layer type confusion values.} QUIC frame types (RFC~9000, \S19) and HTTP/3 frame types (RFC~9114, \S7.2) are injected as capsule type bytes to test that the implementation correctly treats the CONNECT stream as capsule data and does not misinterpret these bytes as lower-layer control frames. Examples include the QUIC \texttt{MAX\_DATA} frame type (\texttt{0x10}), the HTTP/3 \texttt{SETTINGS} frame type (\texttt{0x04}), and HTTP/3 reserved ``grease'' values such as \texttt{0x21} that must be ignored.
+\end{enumerate}
+
+\paragraph{Two-axis test case generation.} The fuzzer combines these values along two independent axes. On the first axis, the capsule type varies while the length and payload are held at a neutral default (length~$= 0$, empty body). On the second axis, the capsule type is fixed to a neutral value (\texttt{0x00}, an unknown type that must be ignored per RFC~9297) while the length/payload field varies---either as a bare fuzzed length with no body, or as a correctly-lengthed payload drawn from the pool. For example:
+
+\begin{verbatim}
+  Axis 1 — fuzz type:     [0x80002843][0x00]
+           (overlong CLOSE as type, length=0, no payload)
+
+  Axis 2 — fuzz payload:  [0x00][0x04][0x6843 0x00]
+           (type=0, length=4, payload=valid CLOSE capsule bytes)
+\end{verbatim}
+
+\noindent This two-axis strategy ensures that both the type parser and the length/payload parser are exercised with all pool values without requiring a full cross-product, keeping the test case count manageable at approximately 12\,000 test cases.
 
 \subsection{Multistep Mode: Scenario-Based Sequence Mutations}
 
-The multistep mode executes multi-step scenarios that interleave legitimate data operations with capsule sequences on a single live session. It is designed to trigger state-machine bugs: use-after-free, state confusion after session close, crash-on-reorder, and similar defects. Each scenario is a sequence of typed steps: \texttt{bidi(payload)} opens a bidirectional WebTransport stream and awaits an echo response (1-second timeout, non-fatal); \texttt{uni(payload)} opens a unidirectional stream and sends the payload; \texttt{datagram(payload)} sends a QUIC datagram; \texttt{capsule(data)} sends a raw capsule on the CONNECT stream; and \texttt{sleep(duration)} pauses between steps.
+The multistep mode executes multi-step scenarios that interleave legitimate data operations with capsule sequences on a single live session. Unlike oneshot mode, which tests capsule parsing in isolation, multistep mode is designed to trigger state-machine bugs: use-after-free, state confusion after session close, crash-on-reorder, and similar defects that only manifest when the server has real streams and data in flight.
 
-From each base scenario, the \emph{mutator} generates all interesting variants. These include all permutations of the steps, each individual step duplicated in place and appended at the end of the sequence, each step omitted, and rapid-fire repetition of each step 2, 5, and 10 times. Additional variants include the reversed step order, injection of prohibited capsule types (\texttt{WT\_MAX\_STREAM\_DATA} / \texttt{WT\_STREAM\_DATA\_BLOCKED}, which per draft-15 \S5.4 must cause a session error) at every position, and post-CLOSE activity where data is sent after a \texttt{CLOSE\_SESSION} capsule.
+\paragraph{Step types.} Each scenario is a sequence of typed steps:
 
-There are 12 base scenarios covering common usage patterns and edge cases: close races with active echoes, all three transport paths followed by teardown, capsule disruption of stream processing, drain while streams are active, flow control with live data, error code parsing, rapid stream creation, datagram floods, uni/capsule interleaving, contradictory flow-control limits, and blocked-then-create sequences. The mutator produces approximately 920 unique test cases across all scenarios.
+\begin{table}[ht]
+\centering
+\caption{Multistep scenario step types}
+\label{tab:step-types}
+\begin{tabular}{lp{9cm}}
+\hline
+\textbf{Step} & \textbf{Action} \\
+\hline
+\texttt{bidi(payload)} & Opens a bidirectional WebTransport stream, sends \texttt{payload}, awaits echo (1\,s timeout, non-fatal) \\
+\texttt{uni(payload)} & Opens a unidirectional stream, sends \texttt{payload} (fire-and-forget) \\
+\texttt{datagram(payload)} & Sends a QUIC datagram \\
+\texttt{capsule(data)} & Sends raw capsule bytes on the CONNECT stream \\
+\texttt{sleep(duration)} & Pauses between steps \\
+\hline
+\end{tabular}
+\end{table}
+
+\paragraph{Base scenarios.} There are 12 base scenarios, each a manually designed sequence that exercises a specific usage pattern or edge case. For example, the \texttt{bidi\_then\_shutdown} scenario establishes a real echo exchange before tearing down the session:
+
+\begin{verbatim}
+  bidi_then_shutdown:
+    1. bidi("HELLO")           -- open stream, await echo
+    2. capsule(DRAIN_SESSION)  -- signal graceful shutdown
+    3. capsule(CLOSE_SESSION)  -- terminate session
+\end{verbatim}
+
+\noindent Other scenarios include \texttt{all\_transports\_then\_close} (exercise all three data paths before teardown), \texttt{capsule\_between\_bidi} (inject a \texttt{MAX\_DATA} capsule between two bidirectional echo exchanges), \texttt{drain\_mid\_data} (drain while streams are active), \texttt{rapid\_bidi\_close} (burst of stream creation before close), and \texttt{kitchen\_sink} (all six action types in a single sequence for maximum permutation surface). The full list of 12 scenarios is provided in Appendix~\ref{appendix:scenarios}.
+
+\paragraph{Mutation engine.} From each base scenario, the mutator generates all interesting variants using the following strategies:
+
+\begin{enumerate}
+    \item \textbf{Permutations}: all orderings of the steps (capped at 120 per scenario to bound combinatorial growth). For the 3-step \texttt{bidi\_then\_shutdown}, this yields 6 permutations, including the reversed order \texttt{[CLOSE, DRAIN, bidi]} which tests whether the server handles a close before any data.
+
+    \item \textbf{Duplications}: each step is duplicated in place and also appended at the end. For example, duplicating the \texttt{DRAIN} step:
+\begin{verbatim}
+  bidi -> DRAIN -> DRAIN -> CLOSE   (in-place)
+  bidi -> DRAIN -> CLOSE -> DRAIN   (at end)
+\end{verbatim}
+
+    \item \textbf{Omissions}: each step is removed in turn. Omitting the \texttt{DRAIN} yields \texttt{[bidi, CLOSE]}---a close without prior drain.
+
+    \item \textbf{Rapid-fire}: each non-sleep step is repeated 2, 5, and 10 times. For example, 10 consecutive \texttt{bidi("HELLO")} calls test rapid stream creation.
+
+    \item \textbf{Prohibited capsule injection}: well-formed but prohibited capsules (\texttt{WT\_MAX\_STREAM\_DATA} and \texttt{WT\_STREAM\_DATA\_BLOCKED}, which per draft-15 \S5.4 must cause a session error) are injected at every position in the sequence. For a 3-step scenario, this yields $2 \times 4 = 8$ injection variants.
+
+    \item \textbf{Post-CLOSE activity}: for scenarios containing a \texttt{CLOSE\_SESSION} capsule, additional steps are appended after the close---a bidirectional stream, a unidirectional stream, a datagram, a drain capsule, and each prohibited capsule---testing whether the server correctly rejects activity on a closed session.
+\end{enumerate}
+
+\noindent All generated variants are deduplicated by content. The mutator produces approximately 920 unique test cases across all 12 scenarios.
+
+\subsection{Scenario-Lastfuzz Mode: Stateful Capsule Fuzzing}
+
+The scenario-lastfuzz mode combines the state-richness of multistep scenarios with oneshot-style capsule mutation. Each test case plays a scenario's prefix steps (all steps except the last) as legitimate traffic to put the server into a specific protocol state, then replaces the last step with a single malformed capsule drawn from the same value pool used by oneshot mode.
+
+For example, given the \texttt{bidi\_then\_shutdown} scenario (bidi $\to$ drain $\to$ close), the prefix \texttt{[bidi, drain]} is executed normally, placing the server in a post-drain state. Then a fuzzed capsule such as an overlong-encoded \texttt{CLOSE\_SESSION} or a truncated VarInt is sent:
+
+\begin{verbatim}
+  1. bidi("HELLO")              -- legitimate traffic
+  2. capsule(DRAIN_SESSION)     -- legitimate drain
+  3. capsule(0xc000000000002843 0x00)  -- fuzzed: overlong CLOSE
+\end{verbatim}
+
+\noindent The number of test cases is the product of the 12 scenarios and the number of fuzz values from the oneshot pool. Unlike multistep mode, scenario-lastfuzz does not permute or mutate the step order---it tests capsule-level robustness in each reachable protocol state.
 
 \subsection{Version Compatibility of the Fuzzer}
 \label{sec:version-compat}
 
-A key design property of the fuzzer is its universality across draft versions. The tested servers implement different drafts: the Python echo server (based on aioquic) implements draft-03, while the Rust echo server (based on wtransport) implements draft-09. Despite these differences, the same fuzzer targets all servers simultaneously. This is possible for three reasons. The QUIC stream mechanics are identical across all drafts: bidirectional streams prefixed with \texttt{0x41} and Session ID, unidirectional streams with type \texttt{0x54} and Session ID, and QUIC datagrams. The capsule format (type/length/payload) is also the same across drafts; only the set of defined capsule types changes. Finally, per RFC~9297, unknown capsule types must be silently ignored, so flow-control capsules (introduced in draft-09+) sent to a draft-03 server are valid test cases: a compliant server ignores them, while a non-compliant server that crashes reveals a bug.
+A key design property of the fuzzer is its universality across draft versions. The tested servers implement different drafts: the Python echo server (based on aioquic) implements draft-03, while the Rust echo server (based on wtransport) implements draft-09. Despite these differences, the same fuzzer targets all servers simultaneously.
+
+This universality rests on three protocol properties described in Section~\ref{sec:draft-compat}. First, the QUIC stream mechanics are identical across all drafts: bidirectional streams prefixed with \texttt{0x41} and Session ID, unidirectional streams with type \texttt{0x54} and Session ID, and QUIC datagrams. Second, the capsule format (type/length/payload) is the same across drafts; only the set of defined capsule types changes. Third, and most importantly, per RFC~9297 unknown capsule types must be silently ignored (Section~\ref{sec:capsules}). This last property is fundamental to the fuzzer's design: flow-control capsules introduced in draft-09 and later can be freely sent to a draft-03 server---a compliant server will silently discard them, while a non-compliant server that crashes on an unrecognized capsule reveals a robustness bug.
 
 The fuzzer adapts only the initial connection setup (SETTINGS parameter values and the upgrade token) based on the target's draft version, which is determined before the fuzzing run using a fingerprinting tool.
 
