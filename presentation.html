@@ -52,30 +52,6 @@
             font-size: 1.0em;
         }
 
-        .flow-container {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-top: 40px;
-        }
-
-        .flow-box {
-            background-color: transparent;
-            border: 2px solid #2c3e50;
-            padding: 15px;
-            border-radius: 10px;
-            width: 30%;
-            font-size: 0.9em;
-            position: relative;
-            color: #333;
-        }
-
-        .flow-arrow {
-            font-size: 2em;
-            color: #2c3e50;
-            font-weight: bold;
-        }
-
         .highlight-box {
             background: #f8f9fa;
             padding: 15px;
@@ -106,21 +82,55 @@
             background: transparent !important;
         }
 
+        .done-tag {
+            display: inline-block;
+            background: #27ae60;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.7em;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+
+        .wip-tag {
+            display: inline-block;
+            background: #f39c12;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.7em;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+
+        .todo-tag {
+            display: inline-block;
+            background: #e74c3c;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.7em;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+
+        code {
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.85em;
+        }
+
+        .timeline-item {
+            margin-bottom: 15px;
+        }
+
+        .timeline-item p {
+            margin: 0;
+        }
+
         @media print {
-            .flow-container {
-                display: flex !important;
-                flex-direction: row !important;
-                justify-content: space-between !important;
-                align-items: center !important;
-            }
-
-            .flow-box {
-                width: 30% !important;
-                flex-basis: 30% !important;
-                margin: 0 !important;
-                display: block !important;
-            }
-
             .reveal .slide-number {
                 display: block !important;
                 position: absolute !important;
@@ -140,9 +150,10 @@
         </div>
         <div class="slides">
 
+            <!-- SLIDE 1: Title -->
             <section>
                 <h2>WebTransport Protocol Fuzzing</h2>
-                <p class="medium-text">Bakalárska práca</p>
+                <p class="medium-text">Prezentácia 2 &mdash; Aktuálny stav a plán</p>
                 <hr>
                 <p style="color: #333;"><strong>Autor:</strong> Vladyslav Havriuk</p>
                 <p style="color: #333;"><strong>Školiteľ:</strong> doc. RNDr. Martin Stanek, PhD.</p>
@@ -150,263 +161,241 @@
                     https://github.com/qbitroot/webtransport-fuzzer</p>
             </section>
 
+            <!-- SLIDE 2: Brief topic reminder -->
             <section>
-                <h3>Čo je WebTransport?</h3>
-                <ul class="medium-text">
-                    <li class="fragment">Moderný protokol pre obojsmernú komunikáciu klient-server.</li>
-                    <li class="fragment">Postavený na <strong>HTTP/3</strong> a <strong>QUIC</strong>.</li>
-                    <li class="fragment">Kombinuje nízku latenciu (ako UDP) s bezpečnosťou a spoľahlivosťou (TLS 1.3,
-                        Congestion Control).</li>
-                    <li class="fragment"><strong>Cieľ práce:</strong> Testovanie bezpečnosti tohto protokolu.</li>
-                </ul>
-            </section>
-
-            <section>
-                <h3>Čo je Fuzzing?</h3>
-                <ul class="medium-text">
-                    <li class="fragment"><strong>Definition:</strong> Automated software testing method.</li>
-                    <li class="fragment"><strong>Principle:</strong> Injecting unexpected, random, or invalid inputs
-                        (malformed data).</li>
-                    <li class="fragment"><strong>Goal:</strong> Discover crashes, memory leaks, and security
-                        vulnerabilities.</li>
-                    <li class="fragment" style="font-style: italic; color: #2980b9;">"Throwing bricks at windows to see
-                        if the house collapses."</li>
-                </ul>
-            </section>
-
-            <section>
-                <h3>Architektúra protokolov</h3>
-                <table style="font-size: 0.65em; border: 1px solid white;">
-                    <thead>
-                        <tr>
-                            <th>Protokol</th>
-                            <th>Rola</th>
-                            <th>Vrstva</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr class="fragment">
-                            <td style="color: #000; font-weight: bold;">QUIC</td>
-                            <td>Cesta (The Road)</td>
-                            <td>Transport (L4)</td>
-                        </tr>
-                        <tr class="fragment">
-                            <td style="color: #000; font-weight: bold;">HTTP/3</td>
-                            <td>Dopravné predpisy</td>
-                            <td>Application (L7)</td>
-                        </tr>
-                        <tr class="fragment">
-                            <td style="color: #000; font-weight: bold;">WebTransport</td>
-                            <td>Náklad (Cargo)</td>
-                            <td>Application (L7+)</td>
-                        </tr>
-                    </tbody>
-                </table>
-                <p class="small-text fragment" style="margin-top: 20px;">
-                    WebTransport využíva HTTP/3 na "setup", ale potom posiela dáta priamo cez QUIC streamy.
-                </p>
-            </section>
-
-            <section>
-                <h3>Fáza 1: Nadviazanie spojenia</h3>
-                <p class="small-text">Pred fuzzingom musíme prejsť striktným bezpečnostným procesom.</p>
-
-                <div class="flow-container">
-                    <div class="flow-box fragment">
-                        <strong>1. Handshake</strong><br>
-                        <span style="opacity: 0.7">QUIC + TLS 1.3</span>
-                    </div>
-
-                    <div class="flow-arrow fragment">→</div>
-
-                    <div class="flow-box fragment">
-                        <strong>2. Settings</strong><br>
-                        <span style="opacity: 0.7">H3 Parameters<br>(Max Sessions)</span>
-                    </div>
-
-                    <div class="flow-arrow fragment">→</div>
-
-                    <div class="flow-box fragment">
-                        <strong>3. Connect</strong><br>
-                        <span style="opacity: 0.7">HTTP Method:<br>CONNECT</span>
-                    </div>
-                </div>
-
-                <p class="small-text fragment" style="margin-top: 30px; color: #333;">
-                    Až po úspešnom kroku 3 sme v stave "OPEN" a môžeme fuzzovať.
-                </p>
-            </section>
-
-            <section>
-                <h3>Fáza 2: Fuzzing Loop</h3>
-                <!-- Removed 'Klame telom' text as requested -->
-
-                <div style="display: flex; align-items: center; justify-content: center; margin-top: 30px;">
-                    <div style="flex: 1; text-align: right; padding-right: 20px;">
-                        <h5 style="color: #333">BooFuzz</h5>
-                        <div class="small-text">Generuje invalidné<br>VarInts, Payloady...</div>
-                    </div>
-
-                    <div style="font-size: 2em; padding: 0 10px;">➔</div>
-
-                    <div style="flex: 2; border: 2px solid #333; padding: 15px; border-radius: 10px;">
-                        <strong>STATE: OPEN</strong>
-                        <ul class="small-text" style="text-align: left; margin-top: 10px;">
-                            <li>Inject: Malformed Capsules</li>
-                            <li>Inject: Invalid Stream IDs</li>
-                            <li>Inject: Overflowed Datagrams</li>
-                        </ul>
-                    </div>
-                </div>
-            </section>
-
-            <section>
-                <h3>Fuzzing Instrumentation</h3>
-                <div class="highlight-box fragment">
-                    <h4>What is Instrumentation?</h4>
+                <h3>Téma práce</h3>
+                <div class="highlight-box">
                     <p class="medium-text">
-                        Technika, ktorá nám umožňuje "vidieť dovnútra" bežiaceho programu.
+                        <strong>Cieľ:</strong> Návrh a implementácia fuzzera pre protokol
+                        <strong>WebTransport over HTTP/3</strong> &mdash; testovanie robustnosti a bezpečnosti
+                        rôznych serverových implementácií.
                     </p>
                 </div>
                 <ul class="medium-text" style="margin-top: 30px;">
-                    <li class="fragment">Code Coverage tracking (execution paths).</li>
-                    <li class="fragment">Crash and Error detection mechanisms.</li>
-                    <li class="fragment">Feedback loop to guide the fuzzer.</li>
+                    <li class="fragment">WebTransport = moderný protokol nad QUIC (RFC 9000) / HTTP/3 (RFC 9114).</li>
+                    <li class="fragment">Fuzzing = automatizované posielanie malformovaných vstupov na odhalenie chýb.</li>
+                    <li class="fragment">Cieľové implementácie: <strong>Rust</strong> (wtransport), <strong>Go</strong> (webtransport-go), <strong>Python</strong> (aioquic).</li>
                 </ul>
             </section>
 
+            <!-- SLIDE 3: Completed milestones -->
             <section>
-                <h3>Graybox Fuzzing via Logging</h3>
-                <p class="small-text">Language Agnostic Approach</p>
+                <h3>Čo je hotové</h3>
+                <ul class="medium-text">
+                    <li class="fragment">
+                        <strong>Naštudovaná literatúra</strong> <span class="done-tag">done</span><br>
+                        <span class="small-text">RFC 9000 (QUIC), RFC 9114 (HTTP/3), RFC 9297 (Capsule Protocol),
+                            draft-ietf-webtrans-http3 (ešte stále draft, nie RFC)</span>
+                    </li>
+                    <li class="fragment">
+                        <strong>Fuzzer implementovaný</strong> <span class="done-tag">done</span><br>
+                        <span class="small-text">Python + Boofuzz + aioquic. 3 fuzzing modes, tisíce test casov.</span>
+                    </li>
+                    <li class="fragment">
+                        <strong>Echo servery inštrumentované</strong> <span class="done-tag">done</span><br>
+                        <span class="small-text">Rust (wtransport), Python (aioquic) a Go (webtransport-go) &mdash;
+                            všetky s WTFUZZ structured log formátom.</span>
+                    </li>
+                    <li class="fragment">
+                        <strong>Bug v Rust knižnici objavený</strong> <span class="done-tag">done</span><br>
+                        <span class="small-text">Reachable assertion panic vo wtransport.</span>
+                    </li>
+                    <li class="fragment">
+                        <strong>Log analýza pipeline</strong> <span class="done-tag">done</span><br>
+                        <span class="small-text">SQLite DB + log grouping podľa SHA-256 fingerprint serverového výstupu.</span>
+                    </li>
+                </ul>
+            </section>
 
+            <!-- SLIDE 4: Fuzzing modes -->
+            <section>
+                <h3>Fuzzing modes</h3>
+                <div style="font-size: 0.75em; text-align: left;">
+                    <div class="fragment" style="margin-bottom: 12px; padding: 10px; border-left: 4px solid #2980b9;">
+                        <strong>oneshot</strong> &mdash; 1 malformed capsule per session.<br>
+                        <span class="small-text">Fuzz: type, length, payload (boundary values, overlong VarInts, cross-layer type confusion).</span>
+                    </div>
+                    <div class="fragment" style="margin-bottom: 12px; padding: 10px; border-left: 4px solid #27ae60;">
+                        <strong>multistep</strong> &mdash; multi-step scenáre na živej session.<br>
+                        <span class="small-text">Scenáre &times; mutácie (permutácie, duplikácie, vynechania, rapid-fire, zakázané capsule injection).</span>
+                    </div>
+                    <div class="fragment" style="margin-bottom: 12px; padding: 10px; border-left: 4px solid #8e44ad;">
+                        <strong>scenario-lastfuzz</strong> &mdash; scenár ako prefix, posledný step fuzzed.<br>
+                        <span class="small-text">Kombinuje state-richness multistep + coverage oneshot capsúl.</span>
+                    </div>
+                    <div class="fragment" style="margin-bottom: 12px; padding: 10px; border-left: 4px solid #e67e22;">
+                        <strong>all</strong> &mdash; všetky modes v jednom behu, deduplikované test cases.
+                    </div>
+                </div>
+            </section>
+
+            <!-- SLIDE 5: Scope of fuzzing — sent_data format -->
+            <section>
+                <h3>Scope of fuzzing</h3>
+                <p class="small-text" style="text-align: left; margin-bottom: 10px;">
+                    Každý test case zaznamenáva presne, čo bolo odoslané serveru &mdash; formát <code>action(hex)</code>:
+                </p>
+                <pre style="font-size: 0.6em; background: #f5f5f5; padding: 15px; border-radius: 8px; text-align: left; border: 1px solid #ccc;"><code>capsule(800078ae00)       -- send data on CONNECT capsule control stream
+bidi(48454c4c4f)          -- open bidi WT stream, send data, await echo
+uni(554e49)               -- open uni WT stream, send data
+datagram(4447)            -- QUIC datagram</code></pre>
+                <div class="fragment">
+                    <p class="small-text" style="margin-top: 15px; text-align: left;">
+                        <strong>CONNECT stream</strong> = obyčajný bidirectional QUIC stream, ktorý sa používa
+                        na session setup (HTTP CONNECT) a potom slúži ako control channel
+                        pre capsules (RFC 9297). Nie je to špeciálna vrstva &mdash; je to ten istý
+                        QUIC stream, na ktorom posielame fuzzed data.
+                    </p>
+                </div>
+                <div class="fragment">
+                    <p class="small-text" style="margin-top: 10px; text-align: left;">
+                        <strong>WT streams/datagrams</strong> = ďalšie QUIC streams/datagrams asociované
+                        so session cez Session ID. Fuzzer ich otvára, posiela dáta a sleduje echo response.
+                    </p>
+                </div>
+            </section>
+
+            <!-- SLIDE 6: Methodology (healthcheck + log grouping) -->
+            <section>
+                <h3>Fuzzing methodology</h3>
                 <div class="column-container" style="margin-top: 10px;">
                     <div class="column fragment">
-                        <strong>The Problem</strong>
+                        <strong>Health Check</strong>
                         <p class="small-text">
-                            Tradičný graybox (napr. AFL++) vyžaduje kompiláciu so špeciálnou inštrumentáciou, čo je
-                            ťažké pre rôzne jazyky (Rust, Go, Python).
+                            Po každom test case fuzzer otvorí nový bidi stream a pošle echo probe.
+                            Ak server neodpovie do 1s &mdash; logged ako failure.
+                            Detekuje crashe, memory corruption a state confusion.
                         </p>
                     </div>
                     <div class="column fragment" style="border-color: #27ae60;">
-                        <strong>The Solution: Logs</strong>
+                        <strong>Log Grouping</strong>
                         <p class="small-text">
-                            Echo Server writes execution logs in a standardized format that our Fuzzer understands.
+                            Serverový output je SHA-256 fingerprintovaný. Test cases s identickým
+                            outputom zdieľajú jednu <code>log_group</code> &mdash; grouping podľa failure mode.
+                            Eliminuje duplicity, umožňuje rýchlu analýzu.
                         </p>
                     </div>
                 </div>
-
-                <div class="highlight-box fragment"
-                    style="margin-top: 10px; border-left-color: #27ae60; background: #eafaf1;">
+                <div class="highlight-box fragment" style="margin-top: 15px; border-left-color: #8e44ad;">
                     <p class="small-text">
-                        Fuzzer číta tieto logy a "vidí", v akom stave je server, bez priameho prístupu k pamäti.
+                        <strong>WTFUZZ formát:</strong> Inštrumentované servery emitujú
+                        <code>WTFUZZ|&lt;conn&gt;|EVENT|key=val</code> na stdout.
+                        Offline korelácie cez <code>analyze_logs.py</code>.
                     </p>
                 </div>
             </section>
 
+            <!-- SLIDE 7: Rust bug finding -->
             <section>
-                <h3>Ciele testovania (Targets)</h3>
-                <p class="small-text">Testujeme rôzne implementácie WebTransport Echo Serverov:</p>
-
-                <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; margin-top: 20px;">
-                    <div class="fragment"
-                        style="background: #e0e0e0; padding: 10px 20px; border-radius: 5px; color: #333;">
-                        <span style="color: #c0392b; font-weight: bold;">Rust</span> <span class="small-text"
-                            style="font-size: 1.2em">(wtransport)</span>
-                    </div>
-                    <div class="fragment"
-                        style="background: #e0e0e0; padding: 10px 20px; border-radius: 5px; color: #333;">
-                        <span style="color: #2980b9; font-weight: bold;">Go</span> <span class="small-text"
-                            style="font-size: 1.2em">(webtransport-go)</span>
-                    </div>
-                    <div class="fragment"
-                        style="background: #e0e0e0; padding: 10px 20px; border-radius: 5px; color: #333;">
-                        <span style="color: #d35400; font-weight: bold;">Python</span> <span class="small-text"
-                            style="font-size: 1.2em">(aioquic)</span>
-                    </div>
-                    <div class="fragment"
-                        style="background: #e0e0e0; padding: 10px 20px; border-radius: 5px; color: #333;">
-                        <span style="color: #27ae60; font-weight: bold;">Node.js</span> <span class="small-text"
-                            style="font-size: 1.2em">(Socket.IO)</span>
-                    </div>
-                </div>
-            </section>
-
-            <section>
-                <h3>Implementácia</h3>
-                <p class="medium-text"><strong>Technológia:</strong> Python + BooFuzz + aioquic</p>
-                <ul>
-                    <li class="fragment"><strong>Shim Architektúra:</strong> Bridge medzi fuzzerom a šifrovaným
-                        spojením.</li>
-                    <li class="fragment"><strong>State Machine:</strong> BooFuzz kontroluje logickú postupnosť (Connect
-                        -> Open Stream -> Send Data).</li>
-                </ul>
-                <hr class="fragment">
-                <p class="fragment medium-text">
-                    <strong>Záver:</strong> Vytvárame univerzálny nástroj na overenie robustnosti WebTransport
-                    implementácií.
-                </p>
-            </section>
-
-            <section>
-                <h3>Current Findings</h3>
-                <p class="medium-text"><strong>wtransport (Rust)</strong></p>
-                <div class="highlight-box" style="margin-top: 20px;">
+                <h3>Finding: wtransport (Rust)</h3>
+                <div class="highlight-box" style="margin-top: 20px; border-left-color: #c0392b;">
                     <p class="medium-text">
-                        <strong>Reachable Assertion Bug</strong>
+                        <strong>Reachable Assertion Panic</strong>
                     </p>
                     <p class="small-text" style="margin-top: 10px;">
-                        Objavený v štandardnom echo serveri z <a href="https://github.com/BiagioFesta/wtransport"
-                            style="color: #2980b9;">github.com/BiagioFesta/wtransport</a>
+                        <a href="https://github.com/BiagioFesta/wtransport" style="color: #2980b9;">github.com/BiagioFesta/wtransport</a>
                     </p>
                 </div>
                 <ul class="small-text" style="margin-top: 20px; text-align: left;">
-                    <li class="fragment"><strong>Trigger:</strong> Odoslanie DRAIN capsule bez korektného HTTP/3 frame.
+                    <li class="fragment"><strong>Príčina:</strong> <code>Capsule::with_frame()</code> má hard
+                        <code>assert!(FrameKind::Data)</code>, ale <code>validate_frame()</code> prepustí aj
+                        <code>Headers</code> a <code>Exercise</code> frames &mdash; assertion panics.
                     </li>
-                    <li class="fragment"><strong>Impact:</strong> Worker thread panic (nie crash celého servera).</li>
-                    <li class="fragment" style="color: #c0392b;"><strong>Problém:</strong> V Rust-e by knižnica nemala
-                        nikdy panikovať.</li>
+                    <li class="fragment"><strong>Dopad:</strong> Worker thread panic. V Rust-e by knižnica nemala
+                        nikdy panikovať &mdash; panic v async tasku spôsobí tichý pád handlera.
+                    </li>
+                    <li class="fragment"><strong>Fix:</strong> Guard <code>frame.kind()</code> check pred volaním
+                        <code>Capsule::with_frame()</code>, skip non-Data frames.
+                    </li>
                 </ul>
             </section>
 
+            <!-- SLIDE 8: Timeline (compressed, done by April 22) -->
             <section>
-                <h3>Future Plan (1/2)</h3>
-                <div style="font-size: 0.7em; text-align: left; margin-top: 30px;">
-                    <div class="fragment" style="margin-bottom: 20px;">
-                        <p><strong style="color: #2980b9;">11.02:</strong> <strong>One-Shot Fuzzer</strong></p>
-                        <p style="margin-left: 20px; opacity: 0.9;">Odoslanie jednej malformed permutovanej požiadavky +
-                            monitoring. Po každej fuzzed session vykonáme validnú session na detekciu memory corruption.
+                <h3>Časový plán na dokončenie</h3>
+                <div style="font-size: 0.7em; text-align: left; margin-top: 20px;">
+                    <div class="timeline-item fragment">
+                        <p><strong style="color: #2980b9;">April 1 &ndash; 7:</strong>
+                            <strong>Finálne fuzzing behy + zber výsledkov</strong></p>
+                        <p style="margin-left: 20px; opacity: 0.9;">
+                            Spustenie všetkých modes na všetkých troch targets.
+                            Systematický zber, analýza a porovnanie výsledkov.
                         </p>
                     </div>
-                    <div class="fragment" style="margin-bottom: 20px;">
-                        <p><strong style="color: #2980b9;">14.02:</strong> <strong>Log Monitor</strong></p>
-                        <p style="margin-left: 20px; opacity: 0.9;">Fuzzer spustí server proces a zachytí jeho output.
-                            Logy sa uložia do SQLite DB pre kategorizáciu unique failure modes.</p>
+                    <div class="timeline-item fragment">
+                        <p><strong style="color: #2980b9;">April 8 &ndash; 14:</strong>
+                            <strong>Popis metodológie + výsledkov v texte</strong></p>
+                        <p style="margin-left: 20px; opacity: 0.9;">
+                            Formalizácia fuzzing metodológie. Popis architektúry, modes, findings.
+                            Zjednotenie a kompletizácia referencií.
+                        </p>
                     </div>
-                    <div class="fragment" style="margin-bottom: 20px;">
-                        <p><strong style="color: #2980b9;">18.02:</strong> <strong>Cross-Language Testing</strong></p>
-                        <p style="margin-left: 20px; opacity: 0.9;">Spustenie fuzzera na Rust, Go, Python, Node.js.
-                            Dokumentácia findings a analýza príčin v library kóde.</p>
+                    <div class="timeline-item fragment">
+                        <p><strong style="color: #2980b9;">April 15 &ndash; 22:</strong>
+                            <strong>Doladenie textu práce</strong></p>
+                        <p style="margin-left: 20px; opacity: 0.9;">
+                            Revízia a vyčistenie textu, abstrakt, záver.
+                            Časová rezerva na neplánované doplnenia alebo opravy.
+                        </p>
                     </div>
                 </div>
             </section>
 
+            <!-- SLIDE 9: Problems and challenges -->
             <section>
-                <h3>Future Plan (2/2)</h3>
-                <div style="font-size: 0.7em; text-align: left; margin-top: 30px;">
-                    <div class="fragment" style="margin-bottom: 20px;">
-                        <p><strong style="color: #2980b9;">28.02:</strong> <strong>Multistep Fuzzing</strong></p>
-                        <p style="margin-left: 20px; opacity: 0.9;">Testovanie hlbších scenárov. Permutatácia Boofuzz
-                            state machine - duplicates, valid messages in invalid states.</p>
-                    </div>
-                    <div class="fragment" style="margin-bottom: 20px;">
-                        <p><strong style="color: #2980b9;">01.03:</strong> <strong>Final Testing & Refinement</strong>
-                        </p>
-                        <p style="margin-left: 20px; opacity: 0.9;">Opakované spustenie fuzzera, dokumentácia a finálne
-                            vylepšenia.</p>
-                    </div>
-                </div>
+                <h3>Problémy a výzvy</h3>
+                <ul style="font-size: 0.85em;">
+                    <li class="fragment">
+                        <strong>Kombinatorická explózia</strong><br>
+                        <span class="small-text">Plný priestor test casov by vyžadoval behy potenciálne trvajúce viacero dní.
+                        Umelo zužujeme na cases ktoré majú najvyššiu pravdepodobnosť odhaliť bugs
+                        (boundary values, zakázané capsule types, state conflicts).</span>
+                    </li>
+                    <li class="fragment">
+                        <strong>WebTransport je stále draft</strong><br>
+                        <span class="small-text">Špecifikácia (draft-ietf-webtrans-http3) sa aktívne mení počas písania práce &mdash;
+                        implementácie sú na rôznych draft verziách (draft-03, draft-09, draft-15).
+                        Riešené tým, že podľa RFC 9297 musia servery ignorovať neznáme capsule types &mdash;
+                        ak namiesto toho crashnú, je to bug.</span>
+                    </li>
+                    <li class="fragment">
+                        <strong>Go server: chýbajúce stream ID</strong><br>
+                        <span class="small-text">Knižnica webtransport-go neexponuje QUIC stream ID cez svoje API,
+                        takže WTFUZZ logy z Go servera neobsahujú <code>stream_id</code>.
+                        Neovplyvňuje fuzzing, ale sťažuje koreláciu logov.</span>
+                    </li>
+                    <li class="fragment">
+                        <strong>Formalizácia v texte</strong><br>
+                        <span class="small-text">Implementácia je hotová, ale premietnutie do formálneho popisu
+                        v bakalárskej práci vyžaduje čas a iterácie.</span>
+                    </li>
+                </ul>
             </section>
 
+            <!-- SLIDE 10: Summary -->
+            <section>
+                <h3>Zhrnutie</h3>
+                <table style="font-size: 0.75em; width: 100%;">
+                    <tr>
+                        <td><strong>Fuzzer</strong></td>
+                        <td>Implementovaný, 3 modes, tisíce test casov <span class="done-tag">done</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Servery</strong></td>
+                        <td>Rust + Python + Go inštrumentované <span class="done-tag">done</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Findings</strong></td>
+                        <td>1 confirmed bug (Rust assertion panic) <span class="done-tag">done</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Text práce</strong></td>
+                        <td>Metodológia + findings + referencie <span class="wip-tag">WIP</span></td>
+                    </tr>
+                </table>
+            </section>
+
+            <!-- SLIDE 11: Thanks -->
             <section>
                 <h2>Ďakujem za pozornosť</h2>
             </section>
